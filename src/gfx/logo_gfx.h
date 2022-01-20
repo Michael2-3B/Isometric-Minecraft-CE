@@ -1,0 +1,97 @@
+// convpng v6.8
+// this file contains all the graphics sources for easy inclusion in a project
+#ifndef __logo_gfx__
+#define __logo_gfx__
+#include <stdint.h>
+
+#define logo_gfx_transparent_color_index 0
+
+#define brick_width 26
+#define brick_height 26
+#define brick_size 678
+extern uint8_t brick_data[678];
+#define brick ((gfx_sprite_t*)brick_data)
+#define dirt_width 26
+#define dirt_height 26
+#define dirt_size 678
+extern uint8_t dirt_data[678];
+#define dirt ((gfx_sprite_t*)dirt_data)
+#define grass_block_width 26
+#define grass_block_height 26
+#define grass_block_size 678
+extern uint8_t grass_block_data[678];
+#define grass_block ((gfx_sprite_t*)grass_block_data)
+#define grass_width 26
+#define grass_height 26
+#define grass_size 678
+extern uint8_t grass_data[678];
+#define grass ((gfx_sprite_t*)grass_data)
+#define lava_width 26
+#define lava_height 26
+#define lava_size 678
+extern uint8_t lava_data[678];
+#define lava ((gfx_sprite_t*)lava_data)
+#define log_width 26
+#define log_height 26
+#define log_size 678
+extern uint8_t log_data[678];
+#define log ((gfx_sprite_t*)log_data)
+#define pebbles_width 26
+#define pebbles_height 26
+#define pebbles_size 678
+extern uint8_t pebbles_data[678];
+#define pebbles ((gfx_sprite_t*)pebbles_data)
+#define stone_slab_width 26
+#define stone_slab_height 26
+#define stone_slab_size 678
+extern uint8_t stone_slab_data[678];
+#define stone_slab ((gfx_sprite_t*)stone_slab_data)
+#define stone_stairs_back_left_width 26
+#define stone_stairs_back_left_height 26
+#define stone_stairs_back_left_size 678
+extern uint8_t stone_stairs_back_left_data[678];
+#define stone_stairs_back_left ((gfx_sprite_t*)stone_stairs_back_left_data)
+#define stone_stairs_back_right_width 26
+#define stone_stairs_back_right_height 26
+#define stone_stairs_back_right_size 678
+extern uint8_t stone_stairs_back_right_data[678];
+#define stone_stairs_back_right ((gfx_sprite_t*)stone_stairs_back_right_data)
+#define stone_stairs_left_width 26
+#define stone_stairs_left_height 26
+#define stone_stairs_left_size 678
+extern uint8_t stone_stairs_left_data[678];
+#define stone_stairs_left ((gfx_sprite_t*)stone_stairs_left_data)
+#define stone_stairs_right_width 26
+#define stone_stairs_right_height 26
+#define stone_stairs_right_size 678
+extern uint8_t stone_stairs_right_data[678];
+#define stone_stairs_right ((gfx_sprite_t*)stone_stairs_right_data)
+#define stone_width 26
+#define stone_height 26
+#define stone_size 678
+extern uint8_t stone_data[678];
+#define stone ((gfx_sprite_t*)stone_data)
+#define stonebrick_width 26
+#define stonebrick_height 26
+#define stonebrick_size 678
+extern uint8_t stonebrick_data[678];
+#define stonebrick ((gfx_sprite_t*)stonebrick_data)
+#define tree_width 26
+#define tree_height 52
+#define tree_size 1354
+extern uint8_t tree_data[1354];
+#define tree ((gfx_sprite_t*)tree_data)
+#define water_width 26
+#define water_height 26
+#define water_size 678
+extern uint8_t water_data[678];
+#define water ((gfx_sprite_t*)water_data)
+#define wood_plank_width 26
+#define wood_plank_height 26
+#define wood_plank_size 678
+extern uint8_t wood_plank_data[678];
+#define wood_plank ((gfx_sprite_t*)wood_plank_data)
+#define sizeof_logo_gfx_pal 94
+extern uint16_t logo_gfx_pal[47];
+
+#endif

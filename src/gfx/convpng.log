@@ -1,0 +1,30 @@
+opened convpng.ini
+
+--- logo_gfx (C) ---
+building palette with [256] available indices ...
+built palette with [47] indices.
+palette quality : 100.00%
+transparent color index : 0
+transparent color : 0xFFFF
+17:
+ brick : 100.00%
+ dirt : 100.00%
+ grass_block : 100.00%
+ grass : 100.00%
+ lava : 100.00%
+ log : 100.00%
+ pebbles : 100.00%
+ stone_slab : 100.00%
+ stone_stairs_back_left : 100.00%
+ stone_stairs_back_right : 100.00%
+ stone_stairs_left : 100.00%
+ stone_stairs_right : 100.00%
+ stone : 100.00%
+ stonebrick : 100.00%
+ tree : 100.00%
+ water : 100.00%
+ wood_plank : 100.00%
+
+converted in 0 s
+
+finished!
