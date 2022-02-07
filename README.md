@@ -2,7 +2,8 @@
 
 Rendering beautiful isometric terrain, using sprites, in C on the TI-84+ CE.
 
-Player positioning is a bit borked right now
+Player positioning is a bit borked right now.
+
 However you can still move using the numpad buttons 1, 7, 9, and 3 in order to go in those directions on the map
 
 This program is currently in progress, its mostly an experiment, but might be a game soon.
