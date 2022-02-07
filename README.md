@@ -12,6 +12,6 @@ This program is currently in progress, its mostly an experiment, but might be a 
 
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render028.png)
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render024.png)
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render024.gif)
 
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render022.gif)
