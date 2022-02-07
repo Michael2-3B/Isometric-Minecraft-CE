@@ -116,6 +116,16 @@ extern uint8_t oak_log_data[785];
 #define oak_planks_size 785
 extern uint8_t oak_planks_data[785];
 #define oak_planks ((gfx_sprite_t*)oak_planks_data)
+#define sand_width 27
+#define sand_height 29
+#define sand_size 785
+extern uint8_t sand_data[785];
+#define sand ((gfx_sprite_t*)sand_data)
+#define pink_flower_width 27
+#define pink_flower_height 29
+#define pink_flower_size 785
+extern uint8_t pink_flower_data[785];
+#define pink_flower ((gfx_sprite_t*)pink_flower_data)
 #define steven_north_1_width 27
 #define steven_north_1_height 43
 #define steven_north_1_size 1163

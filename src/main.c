@@ -45,7 +45,7 @@ const gfx_sprite_t *blocks[] = {
     /* 006 */ glass_pane_west_to_east,
     /* 007 */ glass_pane_south_to_north,
     /* 008 */ oak_leaves,
-    /* 009 */ NULL,
+    /* 009 */ pink_flower,
     /* 010 */ NULL,
     /* 011 */ NULL,
     /* 012 */ NULL,
@@ -144,7 +144,8 @@ const gfx_sprite_t *blocks[] = {
     /* 105 */ stone_brick,
     /* 106 */ stone_brick_2,
     /* 107 */ oak_log,
-    /* 108 */ oak_planks
+    /* 108 */ oak_planks,
+    /* 109 */ sand
 };
 
 #define AIR 0
@@ -156,6 +157,7 @@ const gfx_sprite_t *blocks[] = {
 #define GLASS_PANE_WEST_TO_EAST 6
 #define GLASS_PANE_SOUTH_TO_NORTH 7
 #define OAK_LEAVES 8
+#define PINK_FLOWER 9
 
 #define STONE_BRICK_STAIRS_EAST 24
 #define STONE_BRICK_STAIRS_EAST_2 25
@@ -173,6 +175,7 @@ const gfx_sprite_t *blocks[] = {
 #define STONE_BRICK_2 106
 #define OAK_LOG 107
 #define OAK_PLANKS 108
+#define SAND 109
 
 const gfx_sprite_t *character_sprites[4] = {
     /* 0 */ steven_north_1,
@@ -225,8 +228,6 @@ void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
 
-    generateMap(0);
-
     gfx_Begin();
     gfx_SetDrawBuffer();
 
@@ -239,6 +240,7 @@ void main(void) {
     gfx_FillScreen(5);
     gfx_PrintStringXY("Loading...", 130, 120);
     gfx_BlitBuffer();
+    generateMap(0);
     drawMap(0,0,0);
 
     playerX = midX-(playerGridA*12)+(playerGridB*12);
@@ -392,7 +394,7 @@ void generateMap(int mapNum){
         //fill in 3d map with blocks
         for(a=0; a<sizeX; a++){
             for(b=0; b<sizeZ; b++){
-                i = randInt(0,7);
+                i = randInt(0,15);
                 for(c=0; c<sizeY; c++){
                     if(c<heightMap[a][b]-1){
                         if(randInt(0,7)==0){
@@ -405,21 +407,26 @@ void generateMap(int mapNum){
                     } else if(c==heightMap[a][b]){
                         map[a][b][c] = GRASS_BLOCK;
                         if(c<3) map[a][b][c] = DIRT;
-                        if(i==2) map[a][b][c] = OAK_PLANKS;
+                        if(c==3) map[a][b][c] = SAND;
                     } else {
                         map[a][b][c] = AIR;
                         if(c<3){
-                            map[a][b][c] = LAVA_FULL;
+                            map[a][b][c] = WATER_FULL;
                         } else if(c==3){
-                            map[a][b][c] = LAVA_SURFACE;
+                            map[a][b][c] = WATER_SURFACE;
                         } else if(i==0 && map[a][b][heightMap[a][b]]==GRASS_BLOCK){
                             if(c-heightMap[a][b]<3) map[a][b][c] = OAK_LOG;
                             if(c-heightMap[a][b]>2 && c-heightMap[a][b]<6) map[a][b][c] = OAK_LEAVES;
                         }
                     }
                 }
-                if(i==0)
+                if(i==0){
                     map[a][b][heightMap[a][b]] = DIRT;
+                } else if(i==1){
+                    if(heightMap[a][b]<sizeY-1 && map[a][b][heightMap[a][b]]==GRASS_BLOCK){
+                        map[a][b][1+heightMap[a][b]] = PINK_FLOWER;
+                    }
+                }
             }
 
         }
