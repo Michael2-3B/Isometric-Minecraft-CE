@@ -29,11 +29,21 @@
 /* Put your function prototypes here */
 void generateMap(int mapNum);
 void drawMap(int startX, int startY, int startZ);
+void drawCoordinates();
+void drawBlockSelection();
+void playerMovement();
+void selectionMovement();
+void blockSelectionChange();
+void blockPlacement();
+int gridToScreenX(int gridX, int gridZ);
+int gridToScreenY(int gridX, int gridZ, int gridY);
+void print_string_centered(char *str, int y, int offset, uint8_t c);
 
 /* Put all your globals here */
 
 kb_key_t key;
-gfx_TempSprite(behind_sprite, 29, 43);
+gfx_TempSprite(behind_character, 27, 43);
+gfx_TempSprite(behind_selection, 27, 29);
 
 const gfx_sprite_t *blocks[] = {
     /* 000 */ NULL,
@@ -145,7 +155,9 @@ const gfx_sprite_t *blocks[] = {
     /* 106 */ stone_brick_2,
     /* 107 */ oak_log,
     /* 108 */ oak_planks,
-    /* 109 */ sand
+    /* 109 */ sand,
+    /* 110 */ gravel,
+    /* 111 */ cobblestone
 };
 
 #define AIR 0
@@ -176,6 +188,8 @@ const gfx_sprite_t *blocks[] = {
 #define OAK_LOG 107
 #define OAK_PLANKS 108
 #define SAND 109
+#define GRAVEL 110
+#define COBBLESTONE 111
 
 const gfx_sprite_t *character_sprites[4] = {
     /* 0 */ steven_north_1,
@@ -201,8 +215,7 @@ const int midX = 146;
 //const int midY = -30; //for 36x36map
 const int midY = 120; //for 8x8 map
 
-int playerX;
-int playerY;
+int playerX, playerY;
 
 //for 36x36 map
 /*
@@ -224,6 +237,16 @@ const int sizeY = 10;
 
 int map[8][8][10];
 
+int blockSelection = BRICK;
+int frameCount = 0;
+int frameCount2 = 0;
+
+int selectionA = 7;
+int selectionB = 7;
+int selectionC = 0;
+
+int selectionX, selectionY;
+
 void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
@@ -235,122 +258,40 @@ void main(void) {
 
     gfx_SetTextScale(1,1);
     gfx_SetPalette(logo_gfx_pal, sizeof_logo_gfx_pal, 0);
-    gfx_SetColor(1);
 
     gfx_FillScreen(5);
-    gfx_PrintStringXY("Loading...", 130, 120);
+    print_string_centered("Loading...", 120, 0, 0);
     gfx_BlitBuffer();
-    generateMap(0);
+    generateMap(1);
     drawMap(0,0,0);
 
-    playerX = midX-(playerGridA*12)+(playerGridB*12);
-    playerY = midY+(playerGridB*6)+(playerGridA*6)-(playerGridC*15)+playerGridC;
+    playerX = gridToScreenX(playerGridA, playerGridB);
+    playerY = gridToScreenY(playerGridA, playerGridB, playerGridC);
 
-    gfx_GetSprite(behind_sprite, playerX, playerY);
-    gfx_TransparentSprite(character_sprites[character], playerX, playerY);
+    selectionX = gridToScreenX(selectionA, selectionB);
+    selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+    //gfx_GetSprite(behind_character, playerX, playerY);
+    //gfx_TransparentSprite(character_sprites[character], playerX, playerY);
+
+    gfx_GetSprite(behind_selection, selectionX, selectionY);
+    gfx_TransparentSprite(selection_box, selectionX, selectionY);
+
+    //drawCoordinates();
+    drawBlockSelection();
 
     gfx_BlitBuffer();
 
     do{
         kb_Scan();
 
-        direction = 0;
-        if (kb_Data[3]) {
-            key = kb_Data[3];
-            if(key == kb_1) direction = 1;
-            if(key == kb_4) direction = 2;
-            if(key == kb_7) direction = 3;
-        }
-        if (kb_Data[4]){
-            key = kb_Data[4];
-            if(key == kb_2) direction = 8;
-            if(key == kb_8) direction = 4;
-        }
-        if (kb_Data[5]) {
-            key = kb_Data[5];
-            if(key == kb_3) direction = 7;
-            if(key == kb_6) direction = 6;
-            if(key == kb_9) direction = 5;
-        }
+        blockSelectionChange();
 
-        if(direction > 0){
+        selectionMovement();
 
-            gfx_BlitScreen();
+        blockPlacement();
 
-            /*
-            if(alternate == 0){
-                alternate = 1;
-            } else {
-                alternate = 0;
-            }
-            */
-
-            gfx_Sprite(behind_sprite, playerX, playerY);
-
-            if(direction == 1 && (int)playerGridA<sizeX-1){
-                playerGridA += walkInterval;
-                playerDirection = SOUTH;
-            }
-            if(direction == 3 && (int)playerGridB>0){
-                playerGridB -= walkInterval;
-                playerDirection = WEST;
-            }
-            if(direction == 5 && (int)playerGridA>0){
-                playerGridA -= walkInterval;
-                playerDirection = NORTH;
-            }
-            if(direction == 7 && (int)playerGridB<sizeZ-1){
-                playerGridB += walkInterval;
-                playerDirection = EAST;
-            }
-
-            //allow player to move character up and down (however, this is mostly useless unless I disable the gravity/snapping to the ground)
-            if(direction == 2 && (int)playerGridC > 0){
-                playerGridC -= walkInterval;
-            }
-            if(direction == 6 && (int)playerGridC < sizeY){
-                playerGridC += walkInterval;
-            }
-
-            
-            //gravity, walking up blocks
-            if(map[(int)playerGridA+1][(int)playerGridB+1][(int)playerGridC-1] <= 4){
-                if(playerGridC>0){
-                    playerGridC -= 1;
-                }
-            }
-            if(map[(int)playerGridA+1][(int)playerGridB+1][(int)playerGridC] >= 5){
-                if(playerGridC<10){
-                    playerGridC += 1;
-                }
-            }
-
-
-            playerX = midX-(playerGridA*12)+(playerGridB*12);
-            playerY = midY+(playerGridB*6)+(playerGridA*6)-(playerGridC*15)+playerGridC;
-
-            gfx_GetSprite(behind_sprite, playerX, playerY);
-
-            character = playerDirection;
-            //+ alternate;
-
-            gfx_FillRectangle_NoClip(0,0,30,30);
-
-            gfx_SetTextXY(1,1);
-            gfx_PrintInt((int)playerGridA, 3);
-            gfx_SetTextXY(1,11);
-            gfx_PrintInt((int)playerGridB, 3);
-            gfx_SetTextXY(1,21);
-            gfx_PrintInt((int)playerGridC, 3);
-            gfx_TransparentSprite(character_sprites[character], playerX, playerY);
-
-            drawMap((int)playerGridA+1, (int)playerGridB+1, (int)playerGridC);
-
-            gfx_BlitBuffer();
-
-            //delay(50);
-
-        }
+        //playerMovement();
 
     } while (kb_Data[6] != kb_Enter);
 
@@ -406,7 +347,7 @@ void generateMap(int mapNum){
                         map[a][b][c] = DIRT;
                     } else if(c==heightMap[a][b]){
                         map[a][b][c] = GRASS_BLOCK;
-                        if(c<3) map[a][b][c] = DIRT;
+                        if(c<3) map[a][b][c] = GRAVEL;
                         if(c==3) map[a][b][c] = SAND;
                     } else {
                         map[a][b][c] = AIR;
@@ -415,8 +356,7 @@ void generateMap(int mapNum){
                         } else if(c==3){
                             map[a][b][c] = WATER_SURFACE;
                         } else if(i==0 && map[a][b][heightMap[a][b]]==GRASS_BLOCK){
-                            if(c-heightMap[a][b]<3) map[a][b][c] = OAK_LOG;
-                            if(c-heightMap[a][b]>2 && c-heightMap[a][b]<6) map[a][b][c] = OAK_LEAVES;
+                            if(c-heightMap[a][b]==1) map[a][b][c] = COBBLESTONE;
                         }
                     }
                 }
@@ -430,6 +370,27 @@ void generateMap(int mapNum){
             }
 
         }
+    } else if(mapNum == 1){
+        for(a=0; a<sizeX; a++){
+            for(b=0; b<sizeZ; b++){
+                i = randInt(0,15);
+                for(c=0; c<sizeY; c++){
+                    if(c<2){
+                        if(randInt(0,7)==0){
+                            map[a][b][c] = COAL_ORE;
+                        } else {
+                            map[a][b][c] = STONE;
+                        }
+                    } else if(c==2){
+                        map[a][b][c] = DIRT;
+                    } else if(c==3){
+                        map[a][b][c] = GRASS_BLOCK;
+                    } else {
+                        map[a][b][c] = AIR;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -441,8 +402,8 @@ void drawMap(int startX, int startZ, int startY){
                 if(a<sizeX-1 && b<sizeZ-1 && c<sizeY-1) if(map[a+1][b][c]>=100 && map[a][b+1][c]>=100 && map[a][b][c+1]>=100) continue;
                 if(map[a][b][c] == NULL) continue;
 
-                x = midX-(a*12)+(b*12);
-                y = midY+(b*6)+(a*6)-(c*15)+c;
+                x = gridToScreenX(a,b);
+                y = gridToScreenY(a,b,c);
                 gfx_TransparentSprite(blocks[map[a][b][c]], x, y);
 
                 //gfx_BlitBuffer();
@@ -451,4 +412,243 @@ void drawMap(int startX, int startZ, int startY){
 
         }
     }
+}
+
+void drawCoordinates(){
+    gfx_SetColor(1);
+    gfx_FillRectangle_NoClip(0,0,30,30);
+
+    gfx_SetTextXY(1,1);
+    gfx_PrintInt((int)playerGridA, 3);
+    gfx_SetTextXY(1,11);
+    gfx_PrintInt((int)playerGridB, 3);
+    gfx_SetTextXY(1,21);
+    gfx_PrintInt((int)playerGridC, 3);
+}
+
+void drawBlockSelection(){
+    gfx_SetColor(0);
+    gfx_FillRectangle_NoClip(0,204,36,36);
+
+
+    gfx_SetColor(4);
+    gfx_Line(0,204,36,204);
+    gfx_Line(36,204,36,240);
+
+    gfx_TransparentSprite(blocks[blockSelection], 4, 208);
+}
+
+void playerMovement(){
+    direction = 0;
+    if (kb_Data[3]) {
+        key = kb_Data[3];
+        if(key == kb_1) direction = 1;
+        if(key == kb_4) direction = 2;
+        if(key == kb_7) direction = 3;
+    }
+    if (kb_Data[4]){
+        key = kb_Data[4];
+        if(key == kb_2) direction = 8;
+        if(key == kb_8) direction = 4;
+    }
+    if (kb_Data[5]) {
+        key = kb_Data[5];
+        if(key == kb_3) direction = 7;
+        if(key == kb_6) direction = 6;
+        if(key == kb_9) direction = 5;
+    }
+
+    if(direction > 0){
+
+        gfx_BlitScreen();
+
+        /*
+        if(alternate == 0){
+            alternate = 1;
+        } else {
+            alternate = 0;
+        }
+        */
+
+        gfx_Sprite(behind_character, playerX, playerY);
+
+        if(direction == 1 && (int)playerGridA<sizeX-1){
+            playerGridA += walkInterval;
+            playerDirection = SOUTH;
+        }
+        if(direction == 3 && (int)playerGridB>0){
+            playerGridB -= walkInterval;
+            playerDirection = WEST;
+        }
+        if(direction == 5 && (int)playerGridA>0){
+            playerGridA -= walkInterval;
+            playerDirection = NORTH;
+        }
+        if(direction == 7 && (int)playerGridB<sizeZ-1){
+            playerGridB += walkInterval;
+            playerDirection = EAST;
+        }
+
+        //allow player to move character up and down (however, this is mostly useless unless I disable the gravity/snapping to the ground)
+        if(direction == 2 && (int)playerGridC > 0){
+            playerGridC -= walkInterval;
+        }
+        if(direction == 6 && (int)playerGridC < sizeY){
+            playerGridC += walkInterval;
+        }
+
+        
+        //gravity, walking up blocks
+        if(map[(int)playerGridA+1][(int)playerGridB+1][(int)playerGridC-1] <= 4){
+            if(playerGridC>0){
+                playerGridC -= 1;
+            }
+        }
+        if(map[(int)playerGridA+1][(int)playerGridB+1][(int)playerGridC] >= 5){
+            if(playerGridC<10){
+                playerGridC += 1;
+            }
+        }
+
+
+        playerX = gridToScreenX(playerGridA, playerGridB);
+        playerY = gridToScreenY(playerGridA, playerGridB, playerGridC);
+
+        gfx_GetSprite(behind_character, playerX, playerY);
+
+        character = playerDirection;
+        //+ alternate;
+
+        drawCoordinates();
+
+        gfx_TransparentSprite(character_sprites[character], playerX, playerY);
+
+        drawMap((int)playerGridA+1, (int)playerGridB+1, (int)playerGridC);
+
+        gfx_BlitBuffer();
+
+        //delay(50);
+
+    }
+}
+
+void selectionMovement(){
+    i = 0;
+    if(kb_Data[7] && frameCount2 == 0){
+        key = kb_Data[7];
+        if(key == kb_Down && selectionA<sizeX-1){
+            selectionA++;
+            i = 1;
+        }
+        if(key == kb_Left && selectionB>0){
+            selectionB--;
+            i = 1;
+        }
+        if(key == kb_Right && selectionB<sizeZ-1){
+            selectionB++;
+            i = 1;
+        }
+        if(key == kb_Up && selectionA>0){
+            selectionA--;
+            i = 1;
+        }
+    } else if(kb_Data[1]){
+        key = kb_Data[1];
+        if(key == kb_Trace && selectionC>0 && frameCount2==0){
+            selectionC--;
+            i = 1;
+        }
+        if(key == kb_Graph && selectionC<sizeY-1 && frameCount2==0){
+            selectionC++;
+            i = 1;
+        }
+    };
+
+    if(kb_Data[7] || (kb_Data[1] && (kb_Trace || kb_Graph))){
+        frameCount2++;
+        if(frameCount2 > 100) frameCount2 = 0;
+    } else {
+        frameCount2 = 0;
+    }
+
+    if(i==1){
+
+        gfx_BlitScreen();
+
+        gfx_Sprite(behind_selection, selectionX, selectionY);
+
+        selectionX = gridToScreenX(selectionA, selectionB);
+        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+        gfx_GetSprite(behind_selection, selectionX, selectionY);
+
+        gfx_TransparentSprite(selection_box, selectionX, selectionY);
+
+        gfx_BlitBuffer();
+    }
+}
+
+void blockSelectionChange(){
+    if (kb_Data[1]){
+        key = kb_Data[1];
+        if(key == kb_Yequ || key == kb_Window){
+            if(key == kb_Yequ){
+                i = -1;
+            } else {
+                i = 1;
+            }
+
+            if(frameCount == 0){
+                do {
+                    blockSelection += i;
+                    if(blockSelection > 111) blockSelection = 0;
+                    if(blockSelection < 0) blockSelection = 110;
+                } while(blocks[blockSelection] == NULL);
+                drawBlockSelection();
+                gfx_BlitBuffer();
+            }
+            frameCount++;
+            if(frameCount>250) frameCount = 0;
+        }
+    } else {
+        frameCount = 0;
+    }
+}
+
+void blockPlacement(){
+    if(kb_Data[1]){
+        key = kb_Data[1];
+
+        if(key == kb_2nd){
+            gfx_Sprite(behind_selection, selectionX, selectionY);
+
+            map[selectionA][selectionB][selectionC] = blockSelection;
+            drawMap(selectionA, selectionB, selectionC);
+            
+            selectionX = gridToScreenX(selectionA, selectionB);
+            selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+            gfx_GetSprite(behind_selection, selectionX, selectionY);
+
+            gfx_TransparentSprite(selection_box, selectionX, selectionY);
+
+            gfx_BlitBuffer();
+        } else if(key == kb_Del){
+            //map[a][b][c] = AIR;
+            //drawMap(selection
+        }
+    }
+}
+
+int gridToScreenX(int gridX, int gridZ){
+    return midX-(gridX*12)+(gridZ*12);
+}
+
+int gridToScreenY(int gridX, int gridZ, int gridY){
+    return midY+(gridZ*6)+(gridX*6)-(gridY*15)+gridY;
+}
+
+void print_string_centered(char *str, int y, int offset, uint8_t c) {
+    gfx_SetTextFGColor(c);
+    gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2 + offset, y);
 }
