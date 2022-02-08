@@ -602,7 +602,7 @@ void blockSelectionChange(){
                 do {
                     blockSelection += i;
                     if(blockSelection > 111) blockSelection = 0;
-                    if(blockSelection < 0) blockSelection = 110;
+                    if(blockSelection < 0) blockSelection = 111;
                 } while(blocks[blockSelection] == NULL);
                 drawBlockSelection();
                 gfx_BlitBuffer();
@@ -635,7 +635,7 @@ void blockPlacement(){
             gfx_BlitBuffer();
         } else if(key == kb_Del){
             //map[a][b][c] = AIR;
-            //drawMap(selection
+            //drawMap(somewhere behind the air block);
         }
     }
 }
