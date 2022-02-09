@@ -37,6 +37,8 @@ void blockSelectionChange();
 void blockPlacement();
 int gridToScreenX(int gridX, int gridZ);
 int gridToScreenY(int gridX, int gridZ, int gridY);
+void blockPhysics();
+void addFallingBlock(int blockID, int velocity, int blockX, int blockZ, int blockY, bool flag);
 void print_string_centered(char *str, int y, int offset, uint8_t c);
 
 /* Put all your globals here */
@@ -44,6 +46,19 @@ void print_string_centered(char *str, int y, int offset, uint8_t c);
 kb_key_t key;
 gfx_TempSprite(behind_character, 27, 43);
 gfx_TempSprite(behind_selection, 27, 29);
+
+int fallingBlocks[10][5] = {
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0},
+    {-1, 0, 0, 0, 0}
+};
 
 const gfx_sprite_t *blocks[] = {
     /* 000 */ NULL,
@@ -207,7 +222,7 @@ int character = 1;
 int playerDirection = 1;
 float walkInterval = .1;
 
-int a, b, c, i, x, y;
+int a, b, c, i, j, x, y;
 int direction;
 int alternate = 0;
 
@@ -260,8 +275,6 @@ void main(void) {
     gfx_SetPalette(logo_gfx_pal, sizeof_logo_gfx_pal, 0);
 
     gfx_FillScreen(5);
-    print_string_centered("Loading...", 120, 0, 0);
-    gfx_BlitBuffer();
     generateMap(1);
     drawMap(0,0,0);
 
@@ -290,6 +303,8 @@ void main(void) {
         selectionMovement();
 
         blockPlacement();
+
+        blockPhysics();
 
         //playerMovement();
 
@@ -347,7 +362,13 @@ void generateMap(int mapNum){
                         map[a][b][c] = DIRT;
                     } else if(c==heightMap[a][b]){
                         map[a][b][c] = GRASS_BLOCK;
-                        if(c<3) map[a][b][c] = GRAVEL;
+                        if(c<3){
+                            if(i>10 && i<=15){
+                                map[a][b][c] = GRAVEL;
+                            } else {
+                                map[a][b][c] = DIRT;
+                            }
+                        }
                         if(c==3) map[a][b][c] = SAND;
                     } else {
                         map[a][b][c] = AIR;
@@ -355,14 +376,10 @@ void generateMap(int mapNum){
                             map[a][b][c] = WATER_FULL;
                         } else if(c==3){
                             map[a][b][c] = WATER_SURFACE;
-                        } else if(i==0 && map[a][b][heightMap[a][b]]==GRASS_BLOCK){
-                            if(c-heightMap[a][b]==1) map[a][b][c] = COBBLESTONE;
                         }
                     }
                 }
-                if(i==0){
-                    map[a][b][heightMap[a][b]] = DIRT;
-                } else if(i==1){
+                if(i==1){
                     if(heightMap[a][b]<sizeY-1 && map[a][b][heightMap[a][b]]==GRASS_BLOCK){
                         map[a][b][1+heightMap[a][b]] = PINK_FLOWER;
                     }
@@ -373,7 +390,6 @@ void generateMap(int mapNum){
     } else if(mapNum == 1){
         for(a=0; a<sizeX; a++){
             for(b=0; b<sizeZ; b++){
-                i = randInt(0,15);
                 for(c=0; c<sizeY; c++){
                     if(c<2){
                         if(randInt(0,7)==0){
@@ -391,6 +407,14 @@ void generateMap(int mapNum){
                 }
             }
         }
+    } else if(mapNum == 2){
+        for(a=0; a<sizeX; a++){
+            for(b=0; b<sizeZ; b++){
+                for(c=0; c<sizeY; c++){
+                    map[a][b][c] = AIR;
+                }
+            }
+        }
     }
 }
 
@@ -399,8 +423,8 @@ void drawMap(int startX, int startZ, int startY){
     for(c=startY; c<sizeY; c++){
         for(a=startX; a<sizeX; a++){
             for(b=startZ; b<sizeZ; b++){
-                if(a<sizeX-1 && b<sizeZ-1 && c<sizeY-1) if(map[a+1][b][c]>=100 && map[a][b+1][c]>=100 && map[a][b][c+1]>=100) continue;
                 if(map[a][b][c] == NULL) continue;
+                if(a<sizeX-1 && b<sizeZ-1 && c<sizeY-1) if(map[a+1][b][c]>=100 && map[a][b+1][c]>=100 && map[a][b][c+1]>=100) continue;
 
                 x = gridToScreenX(a,b);
                 y = gridToScreenY(a,b,c);
@@ -619,23 +643,42 @@ void blockPlacement(){
     if(kb_Data[1]){
         key = kb_Data[1];
 
-        if(key == kb_2nd){
-            gfx_Sprite(behind_selection, selectionX, selectionY);
+        if(key == kb_2nd || key == kb_Del){
+            i = blockSelection;
+            if(key == kb_Del) i = AIR;
 
-            map[selectionA][selectionB][selectionC] = blockSelection;
-            drawMap(selectionA, selectionB, selectionC);
-            
-            selectionX = gridToScreenX(selectionA, selectionB);
-            selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+            if(map[selectionA][selectionB][selectionC] != i){
+                map[selectionA][selectionB][selectionC] = i;
+                gfx_FillScreen(5);
+                drawMap(0,0,0);
+                drawBlockSelection();
+                
+                selectionX = gridToScreenX(selectionA, selectionB);
+                selectionY = gridToScreenY(selectionA, selectionB, selectionC);
 
-            gfx_GetSprite(behind_selection, selectionX, selectionY);
+                gfx_GetSprite(behind_selection, selectionX, selectionY);
 
-            gfx_TransparentSprite(selection_box, selectionX, selectionY);
+                gfx_TransparentSprite(selection_box, selectionX, selectionY);
 
-            gfx_BlitBuffer();
-        } else if(key == kb_Del){
-            //map[a][b][c] = AIR;
-            //drawMap(somewhere behind the air block);
+                gfx_BlitBuffer();
+
+                //falling blocks
+                if(i==AIR && selectionC<sizeY-1){
+                    if(map[selectionA][selectionB][selectionC+1] == SAND || map[selectionA][selectionB][selectionC+1] == GRAVEL){
+                        j = 0;
+                        while(fallingBlocks[j][0] != -1) j++;
+
+                        addFallingBlock(map[selectionA][selectionB][selectionC+1], 1, selectionA, selectionB, selectionC+1, false);
+                    }
+                } else if((i==SAND || i==GRAVEL) && selectionC>0){
+                    if(map[selectionA][selectionB][selectionC-1] == AIR){
+                        j = 0;
+                        while(fallingBlocks[j][0] != -1) j++;
+
+                        addFallingBlock(i, 1, selectionA, selectionB, selectionC, false);
+                    }
+                }
+            }
         }
     }
 }
@@ -646,6 +689,67 @@ int gridToScreenX(int gridX, int gridZ){
 
 int gridToScreenY(int gridX, int gridZ, int gridY){
     return midY+(gridZ*6)+(gridX*6)-(gridY*15)+gridY;
+}
+
+void blockPhysics(){
+    int blockX, blockZ, blockY;
+
+    for(j=0; j<10; j++){
+        if(fallingBlocks[j][0] != -1){
+            blockX = fallingBlocks[j][2];
+            blockZ = fallingBlocks[j][3];
+            blockY = fallingBlocks[j][4];
+
+            if(blockY > 0){
+                if(map[blockX][blockZ][blockY-1] == AIR){
+                    map[blockX][blockZ][blockY] = AIR;
+
+                    if(blockY+1<sizeY){
+                        if(map[blockX][blockZ][blockY+1] == SAND || map[blockX][blockZ][blockY+1] == GRAVEL)
+                            addFallingBlock(map[blockX][blockZ][blockY+1], 1, blockX, blockZ, blockY+1, true);
+                    }
+
+                    fallingBlocks[j][4] -= fallingBlocks[j][1];
+                    map[blockX][blockZ][fallingBlocks[j][4]] = fallingBlocks[j][0];
+                } else {
+                    addFallingBlock(-1, 0, 0, 0, 0, false);
+                }
+            } else {
+                addFallingBlock(-1, 0, 0, 0, 0, false);
+            }
+
+            gfx_FillScreen(5);
+            drawMap(0,0,0);
+            drawBlockSelection();
+
+            selectionX = gridToScreenX(selectionA, selectionB);
+            selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+            gfx_GetSprite(behind_selection, selectionX, selectionY);
+
+            gfx_TransparentSprite(selection_box, selectionX, selectionY);
+            gfx_BlitBuffer();
+        }
+    }
+}
+
+void addFallingBlock(int blockID, int velocity, int blockX, int blockZ, int blockY, bool flag){
+    if(flag == true){
+        int iter = 0;
+        while(fallingBlocks[iter][0] != -1) iter++;
+
+        fallingBlocks[iter][0] = blockID;
+        fallingBlocks[iter][1] = velocity;
+        fallingBlocks[iter][2] = blockX;
+        fallingBlocks[iter][3] = blockZ;
+        fallingBlocks[iter][4] = blockY;
+
+    } else {
+        fallingBlocks[j][0] = blockID;
+        fallingBlocks[j][1] = velocity;
+        fallingBlocks[j][2] = blockX;
+        fallingBlocks[j][3] = blockZ;
+        fallingBlocks[j][4] = blockY;
+    }
 }
 
 void print_string_centered(char *str, int y, int offset, uint8_t c) {
