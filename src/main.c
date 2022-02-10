@@ -28,6 +28,7 @@
 
 /* Put your function prototypes here */
 void generateMap(int mapNum);
+void generateShadowMap();
 void drawMap(int startX, int startY, int startZ, int angle);
 void mapRotationChange();
 void drawCoordinates();
@@ -36,6 +37,7 @@ void playerMovement();
 void selectionMovement();
 void blockSelectionChange();
 void blockPlacement();
+void lightUpdates();
 int gridToScreenX(int gridX, int gridZ);
 int gridToScreenY(int gridX, int gridZ, int gridY);
 void blockPhysics();
@@ -126,7 +128,7 @@ const gfx_sprite_t *blocks[] = {
     /* 007 */ glass_pane_south_to_north,
     /* 008 */ oak_leaves,
     /* 009 */ pink_flower,
-    /* 010 */ NULL,
+    /* 010 */ torch,
     /* 011 */ NULL,
     /* 012 */ NULL,
     /* 013 */ NULL,
@@ -214,8 +216,8 @@ const gfx_sprite_t *blocks[] = {
     /* 095 */ NULL,
     /* 096 */ NULL,
     /* 097 */ NULL,
-    /* 098 */ shadow_25percent,
-    /* 099 */ shadow_50percent,
+    /* 098 */ NULL,
+    /* 099 */ NULL,
     /* 100 */ brick,
     /* 101 */ coal_ore,
     /* 102 */ stone,
@@ -230,9 +232,6 @@ const gfx_sprite_t *blocks[] = {
     /* 111 */ cobblestone
 };
 
-#define SHADOW_25 98
-#define SHADOW_50 99
-
 #define AIR 0
 #define WATER_FULL 1
 #define WATER_SURFACE 2
@@ -243,6 +242,7 @@ const gfx_sprite_t *blocks[] = {
 #define GLASS_PANE_SOUTH_TO_NORTH 7
 #define OAK_LEAVES 8
 #define PINK_FLOWER 9
+#define TORCH 10
 
 #define STONE_BRICK_STAIRS_EAST 24
 #define STONE_BRICK_STAIRS_EAST_2 25
@@ -263,6 +263,29 @@ const gfx_sprite_t *blocks[] = {
 #define SAND 109
 #define GRAVEL 110
 #define COBBLESTONE 111
+
+const gfx_sprite_t *shadows[] = {
+    shadow_block_50percent,
+    shadow_block_25percent,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
+#define SHADOW_50 0
+#define SHADOW_25 1
+#define MAX_LIGHT 5
 
 const gfx_sprite_t *character_sprites[4] = {
     /* 0 */ steven_north_1,
@@ -310,6 +333,8 @@ const int sizeY = 10;
 
 int map[8][8][10];
 
+int shadowMap[8][8][10];
+
 int blockSelection = BRICK;
 int frameCount = 0;
 int frameCount2 = 0;
@@ -322,9 +347,19 @@ int selectionX, selectionY;
 
 int drawAngle = 0;
 
+int skyColor;
+int worldTime;
+
 void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
+
+    worldTime = 1;
+    if(worldTime == 0){
+        skyColor = 5;
+    } else {
+        skyColor = 6;
+    }
 
     gfx_Begin();
     gfx_SetDrawBuffer();
@@ -334,15 +369,17 @@ void main(void) {
     gfx_SetTextScale(1,1);
     gfx_SetPalette(logo_gfx_pal, sizeof_logo_gfx_pal, 0);
 
-    gfx_FillScreen(5);
+    gfx_FillScreen(skyColor);
 
-    generateMap(0);
+    generateMap(1);
     //map 0 - dynamic terrain
     //map 1 - flat grass world
     //map 2 - void world
     //map 3 - floating sand world
 
     //DO NOT LOAD MAP 3. IT IS A FLOATING SAND WORLD AND IF YOU MESS WITH THE SAND YOU WILL (CURRENTLY) GET A RAM CLEAR
+
+    generateShadowMap();
 
     drawMap(0,0,0,drawAngle);
 
@@ -503,6 +540,20 @@ void generateMap(int mapNum){
     }
 }
 
+void generateShadowMap(){
+    for(a=0; a<sizeX; a++){
+        for(b=0; b<sizeZ; b++){
+            for(c=0; c<sizeY; c++){
+                if(worldTime == 1){
+                    shadowMap[a][b][c] = SHADOW_50;
+                } else {
+                    shadowMap[a][b][c] = MAX_LIGHT;
+                }
+            }
+        }
+    }
+}
+
 
 void drawMap(int startX, int startZ, int startY, int angle){
     int x1 = 0;
@@ -565,6 +616,9 @@ void drawMap(int startX, int startZ, int startY, int angle){
                 y = gridToScreenY(a,b,c);
                 gfx_TransparentSprite(blocks[map[a][b][c]], x, y);
 
+                if(shadows[shadowMap[a][b][c]] != NULL)
+                    gfx_TransparentSprite(shadows[shadowMap[a][b][c]], x, y);
+
                 //gfx_BlitBuffer();
                 //delay(100);
             }
@@ -590,7 +644,7 @@ void mapRotationChange(){
         }
     }
     if(flag == true){
-        gfx_FillScreen(5);
+        gfx_FillScreen(skyColor);
         drawMap(0,0,0,drawAngle);
         drawBlockSelection();
         
@@ -807,6 +861,7 @@ void blockSelectionChange(){
 }
 
 void blockPlacement(){
+
     if(kb_Data[1]){
         key = kb_Data[1];
 
@@ -817,17 +872,9 @@ void blockPlacement(){
             if(map[selectionA][selectionB][selectionC] != i){
                 map[selectionA][selectionB][selectionC] = i;
 
-                if(selectionC>0){
-                    if(map[selectionA][selectionB][selectionC-1] == AIR){
-                        j=selectionC-1;
-                        while(map[selectionA][selectionB][j] == AIR && j>-1) j--;
+                lightUpdates();
 
-                        map[selectionA][selectionB][j+1] = SHADOW_50;
-                    }
-                    
-                }
-
-                gfx_FillScreen(5);
+                gfx_FillScreen(skyColor);
                 drawMap(0,0,0,drawAngle);
                 drawBlockSelection();
                 
@@ -859,6 +906,64 @@ void blockPlacement(){
                     }
                 }
                 */
+            }
+        }
+    }
+}
+
+void lightUpdates(){
+    int x1, x2, z1, z2, y1, y2;
+    int iter;
+    bool flag = true;
+
+    int lightLevel;
+
+    if(selectionC>0){
+        j=selectionC-1;
+        while(map[selectionA][selectionB][j] == AIR && j>0) j--;
+
+        if(i != AIR){
+            shadowMap[selectionA][selectionB][j] = SHADOW_50;
+        } else {
+            iter = j;
+            while(iter<sizeY-1){
+                iter++;
+                if(map[selectionA][selectionB][iter] != AIR)
+                    flag = false;
+            }
+
+            if(flag==true && worldTime==0)
+                shadowMap[selectionA][selectionB][j] = MAX_LIGHT;
+        }
+        
+    }
+    if(i==TORCH){
+        x1 = selectionA - MAX_LIGHT;
+        if(x1<0) x1 = 0;
+        x2 = selectionA + MAX_LIGHT;
+        if(x2>sizeX-1) x2 = sizeX-1;
+
+        z1 = selectionB - MAX_LIGHT;
+        if(z1<0) z1 = 0;
+        z2 = selectionB + MAX_LIGHT;
+        if(z2>sizeZ-1) z2 = sizeZ-1;
+
+        y1 = selectionC - MAX_LIGHT;
+        if(y1<0) y1 = 0;
+        y2 = selectionC + MAX_LIGHT;
+        if(y2>sizeY-1) y2 = sizeY-1;
+
+
+        for(c=y1; c<=y2; c++){
+            for(a=x1; a<=x2; a++){
+                for(b=z1; b<=z2; b++){
+
+                    lightLevel = MAX_LIGHT - (abs(selectionA-a) + abs(selectionB-b) + abs(selectionC-c));
+                    if(lightLevel < 0) lightLevel = 0;
+
+                    if(shadowMap[a][b][c] < lightLevel)
+                        shadowMap[a][b][c] = lightLevel;
+                }
             }
         }
     }
@@ -933,7 +1038,7 @@ void blockPhysics(){
                 updateSurroundingBlocks(blockX, blockZ, blockY);
             }
 
-            gfx_FillScreen(5);
+            gfx_FillScreen(skyColor);
             drawMap(0,0,0,drawAngle);
             drawBlockSelection();
 

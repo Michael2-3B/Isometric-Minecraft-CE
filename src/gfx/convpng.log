@@ -3,43 +3,44 @@ opened convpng.ini
 --- logo_gfx (C) ---
 building palette with [256] available indices ...
 built palette with [256] indices.
-palette quality : 99.24%
+palette quality : 99.00%
 transparent color index : 0
 transparent color : 0xFFFF
-33:
- water_full : 99.75%
- water_surface : 99.76%
- lava_full : 98.31%
- lava_surface : 98.28%
+34:
+ water_full : 99.86%
+ water_surface : 99.86%
+ lava_full : 97.73%
+ lava_surface : 97.75%
  glass_block : 100.00%
  glass_pane_west_to_east : 100.00%
  glass_pane_south_to_north : 100.00%
- oak_leaves : 96.20%
+ oak_leaves : 95.52%
  stone_brick_stairs_east : 100.00%
  stone_brick_stairs_east_2 : 100.00%
- stone_stairs_east : 99.99%
- brick_stairs_east : 99.98%
- stone_brick_stairs_south_2 : 99.92%
- brick : 93.66%
+ stone_stairs_east : 100.00%
+ brick_stairs_east : 95.09%
+ stone_brick_stairs_south_2 : 99.89%
+ brick : 94.66%
  coal_ore : 100.00%
  stone : 100.00%
- dirt : 99.95%
- grass_block : 99.60%
- stone_brick : 99.99%
- stone_brick_2 : 99.98%
- oak_log : 96.87%
- oak_planks : 98.75%
- sand : 96.15%
- gravel : 99.59%
- cobblestone : 99.83%
- pink_flower : 98.81%
- steven_north_1 : 99.92%
- steven_east_1 : 99.79%
- steven_south_1 : 99.79%
- steven_west_1 : 99.92%
+ dirt : 99.92%
+ grass_block : 99.76%
+ stone_brick : 99.24%
+ stone_brick_2 : 99.99%
+ oak_log : 97.12%
+ oak_planks : 98.36%
+ sand : 97.37%
+ gravel : 99.17%
+ cobblestone : 99.79%
+ pink_flower : 99.12%
+ torch : 87.84%
+ steven_north_1 : 99.91%
+ steven_east_1 : 99.71%
+ steven_south_1 : 99.70%
+ steven_west_1 : 99.91%
  selection_box : 100.00%
- shadow_25percent : 100.00%
- shadow_50percent : 100.00%
+ shadow_block_25percent : 100.00%
+ shadow_block_50percent : 100.00%
 
 converted in 0 s
 
