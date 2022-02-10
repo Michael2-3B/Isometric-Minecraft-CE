@@ -16,7 +16,7 @@ Latest update: Falling blocks! Sand and gravel now are affected by gravity:
 
 Shadows:
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.gif)
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.png)
 
 Map editing:
 
