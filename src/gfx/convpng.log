@@ -3,10 +3,10 @@ opened convpng.ini
 --- logo_gfx (C) ---
 building palette with [256] available indices ...
 built palette with [256] indices.
-palette quality : 99.23%
+palette quality : 99.24%
 transparent color index : 0
 transparent color : 0xFFFF
-31:
+33:
  water_full : 99.75%
  water_surface : 99.76%
  lava_full : 98.31%
@@ -38,6 +38,8 @@ transparent color : 0xFFFF
  steven_south_1 : 99.79%
  steven_west_1 : 99.92%
  selection_box : 100.00%
+ shadow_25percent : 100.00%
+ shadow_50percent : 100.00%
 
 converted in 0 s
 

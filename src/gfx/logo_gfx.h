@@ -161,6 +161,16 @@ extern uint8_t steven_west_1_data[1163];
 #define selection_box_size 785
 extern uint8_t selection_box_data[785];
 #define selection_box ((gfx_sprite_t*)selection_box_data)
+#define shadow_25percent_width 27
+#define shadow_25percent_height 29
+#define shadow_25percent_size 785
+extern uint8_t shadow_25percent_data[785];
+#define shadow_25percent ((gfx_sprite_t*)shadow_25percent_data)
+#define shadow_50percent_width 27
+#define shadow_50percent_height 29
+#define shadow_50percent_size 785
+extern uint8_t shadow_50percent_data[785];
+#define shadow_50percent ((gfx_sprite_t*)shadow_50percent_data)
 #define sizeof_logo_gfx_pal 512
 extern uint16_t logo_gfx_pal[256];
 

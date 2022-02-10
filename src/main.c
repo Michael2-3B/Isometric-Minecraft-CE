@@ -38,7 +38,9 @@ void blockPlacement();
 int gridToScreenX(int gridX, int gridZ);
 int gridToScreenY(int gridX, int gridZ, int gridY);
 void blockPhysics();
-void addFallingBlock(int blockID, int velocity, int blockX, int blockZ, int blockY, bool flag);
+void addFallingBlock(int blockX, int blockZ, int blockY, int velocity);
+void removeFallingBlock(int blockX, int blockZ, int blockY, int index);
+void updateSurroundingBlocks(int blockX, int blockZ, int blockY);
 void print_string_centered(char *str, int y, int offset, uint8_t c);
 
 /* Put all your globals here */
@@ -47,17 +49,69 @@ kb_key_t key;
 gfx_TempSprite(behind_character, 27, 43);
 gfx_TempSprite(behind_selection, 27, 29);
 
-int fallingBlocks[10][5] = {
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0},
-    {-1, 0, 0, 0, 0}
+int fallingBlocksSize = 60;
+int fallingBlocks[60][6] = {
+    // {block ID, velocity, x, y, z, total fall height}
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0},
+    {-1, -1, -1, -1, -1, 0}
 };
 
 const gfx_sprite_t *blocks[] = {
@@ -159,8 +213,8 @@ const gfx_sprite_t *blocks[] = {
     /* 095 */ NULL,
     /* 096 */ NULL,
     /* 097 */ NULL,
-    /* 098 */ NULL,
-    /* 099 */ NULL,
+    /* 098 */ shadow_25percent,
+    /* 099 */ shadow_50percent,
     /* 100 */ brick,
     /* 101 */ coal_ore,
     /* 102 */ stone,
@@ -174,6 +228,9 @@ const gfx_sprite_t *blocks[] = {
     /* 110 */ gravel,
     /* 111 */ cobblestone
 };
+
+#define SHADOW_25 98
+#define SHADOW_50 99
 
 #define AIR 0
 #define WATER_FULL 1
@@ -275,7 +332,10 @@ void main(void) {
     gfx_SetPalette(logo_gfx_pal, sizeof_logo_gfx_pal, 0);
 
     gfx_FillScreen(5);
-    generateMap(1);
+
+    generateMap(1); //world 1 is a flat grass world - 2 layers of stone/coal, 1 layer of dirt, 1 layer of grass
+    //DO NOT LOAD MAP 3. IT IS A FLOATING SAND WORLD AND IF YOU MESS WITH THE SAND YOU WILL (CURRENTLY) GET A RAM CLEAR
+
     drawMap(0,0,0);
 
     playerX = gridToScreenX(playerGridA, playerGridB);
@@ -317,8 +377,7 @@ void main(void) {
 /* Put other functions here */
 
 void generateMap(int mapNum){
-    if(mapNum == 0){
-        //generate heightmap
+    if(mapNum == 0){ //dynamic terrain
         int lowVal = -1;
         int highVal = 1;
         int heightMap[sizeX][sizeZ];
@@ -387,7 +446,7 @@ void generateMap(int mapNum){
             }
 
         }
-    } else if(mapNum == 1){
+    } else if(mapNum == 1){ //flat grass world
         for(a=0; a<sizeX; a++){
             for(b=0; b<sizeZ; b++){
                 for(c=0; c<sizeY; c++){
@@ -407,11 +466,27 @@ void generateMap(int mapNum){
                 }
             }
         }
-    } else if(mapNum == 2){
+    } else if(mapNum == 2){ //empty world
         for(a=0; a<sizeX; a++){
             for(b=0; b<sizeZ; b++){
                 for(c=0; c<sizeY; c++){
                     map[a][b][c] = AIR;
+                }
+            }
+        }
+    } else if(mapNum == 3){ //floating sand world
+        for(a=0; a<sizeX; a++){
+            for(b=0; b<sizeZ; b++){
+                for(c=0; c<sizeY; c++){
+                    if(c==0){
+                        map[a][b][c] = STONE;
+                    } else if(c==1 && a>3 && b>3){
+                        map[a][b][c] = SHADOW_50;
+                    } else if(c==7 && a>3 && b>3){
+                        map[a][b][c] = SAND;
+                    } else {
+                        map[a][b][c] = AIR;
+                    }
                 }
             }
         }
@@ -649,6 +724,17 @@ void blockPlacement(){
 
             if(map[selectionA][selectionB][selectionC] != i){
                 map[selectionA][selectionB][selectionC] = i;
+
+                if(selectionC>0){
+                    if(map[selectionA][selectionB][selectionC-1] == AIR){
+                        j=selectionC-1;
+                        while(map[selectionA][selectionB][j] == AIR && j>-1) j--;
+
+                        map[selectionA][selectionB][j+1] = SHADOW_50;
+                    }
+                    
+                }
+
                 gfx_FillScreen(5);
                 drawMap(0,0,0);
                 drawBlockSelection();
@@ -662,22 +748,25 @@ void blockPlacement(){
 
                 gfx_BlitBuffer();
 
+                updateSurroundingBlocks(selectionA, selectionB, selectionC);
+
+                /*
                 //falling blocks
                 if(i==AIR && selectionC<sizeY-1){
                     if(map[selectionA][selectionB][selectionC+1] == SAND || map[selectionA][selectionB][selectionC+1] == GRAVEL){
-                        j = 0;
-                        while(fallingBlocks[j][0] != -1) j++;
+                        //deleted a block, so now updating surrounding blocks
 
-                        addFallingBlock(map[selectionA][selectionB][selectionC+1], 1, selectionA, selectionB, selectionC+1, false);
+                        updateSurroundingBlocks(selectionA, selectionB, selectionC);
                     }
                 } else if((i==SAND || i==GRAVEL) && selectionC>0){
                     if(map[selectionA][selectionB][selectionC-1] == AIR){
-                        j = 0;
-                        while(fallingBlocks[j][0] != -1) j++;
+                        //placed a gravity block
+                        addFallingBlock(selectionA, selectionB, selectionC, 1);
 
-                        addFallingBlock(i, 1, selectionA, selectionB, selectionC, false);
+                        updateSurroundingBlocks()
                     }
                 }
+                */
             }
         }
     }
@@ -694,28 +783,36 @@ int gridToScreenY(int gridX, int gridZ, int gridY){
 void blockPhysics(){
     int blockX, blockZ, blockY;
 
-    for(j=0; j<10; j++){
+    for(j=0; j<fallingBlocksSize; j++){
         if(fallingBlocks[j][0] != -1){
             blockX = fallingBlocks[j][2];
             blockZ = fallingBlocks[j][3];
             blockY = fallingBlocks[j][4];
 
+
             if(blockY > 0){
                 if(map[blockX][blockZ][blockY-1] == AIR){
                     map[blockX][blockZ][blockY] = AIR;
+                    if(fallingBlocks[j][5] == 0)
+                        updateSurroundingBlocks(blockX, blockZ, blockY);
 
                     if(blockY+1<sizeY){
                         if(map[blockX][blockZ][blockY+1] == SAND || map[blockX][blockZ][blockY+1] == GRAVEL)
-                            addFallingBlock(map[blockX][blockZ][blockY+1], 1, blockX, blockZ, blockY+1, true);
+                            addFallingBlock(blockX, blockZ, blockY+1, 1);
                     }
 
                     fallingBlocks[j][4] -= fallingBlocks[j][1];
-                    map[blockX][blockZ][fallingBlocks[j][4]] = fallingBlocks[j][0];
+
+                    fallingBlocks[j][5]++;
+
+                    map[blockX][blockZ][blockY-1] = fallingBlocks[j][0];
                 } else {
-                    addFallingBlock(-1, 0, 0, 0, 0, false);
+                    removeFallingBlock(blockX, blockZ, blockY, j);
+                    updateSurroundingBlocks(blockX, blockZ, blockY);
                 }
             } else {
-                addFallingBlock(-1, 0, 0, 0, 0, false);
+                removeFallingBlock(blockX, blockZ, blockY, j);
+                updateSurroundingBlocks(blockX, blockZ, blockY);
             }
 
             gfx_FillScreen(5);
@@ -732,23 +829,92 @@ void blockPhysics(){
     }
 }
 
-void addFallingBlock(int blockID, int velocity, int blockX, int blockZ, int blockY, bool flag){
-    if(flag == true){
-        int iter = 0;
-        while(fallingBlocks[iter][0] != -1) iter++;
+void addFallingBlock(int blockX, int blockZ, int blockY, int velocity){
 
-        fallingBlocks[iter][0] = blockID;
-        fallingBlocks[iter][1] = velocity;
-        fallingBlocks[iter][2] = blockX;
-        fallingBlocks[iter][3] = blockZ;
-        fallingBlocks[iter][4] = blockY;
+    int index = 0;
+    while(fallingBlocks[index][0] != -1) index++;
 
-    } else {
-        fallingBlocks[j][0] = blockID;
-        fallingBlocks[j][1] = velocity;
-        fallingBlocks[j][2] = blockX;
-        fallingBlocks[j][3] = blockZ;
-        fallingBlocks[j][4] = blockY;
+    fallingBlocks[index][0] = map[blockX][blockZ][blockY]; //block ID
+    fallingBlocks[index][1] = velocity;
+    fallingBlocks[index][2] = blockX;
+    fallingBlocks[index][3] = blockZ;
+    fallingBlocks[index][4] = blockY;
+
+    fallingBlocks[index][5] = 0;
+}
+
+void removeFallingBlock(int blockX, int blockZ, int blockY, int index){
+
+    fallingBlocks[index][0] = -1;
+    fallingBlocks[index][1] = -1;
+    fallingBlocks[index][2] = -1;
+    fallingBlocks[index][3] = -1;
+    fallingBlocks[index][4] = -1;
+
+    fallingBlocks[index][5] = 0;
+
+}
+
+void updateSurroundingBlocks(int blockX, int blockZ, int blockY){
+
+    if(blockY>1){
+        if(map[blockX][blockZ][blockY-1] == SAND || map[blockX][blockZ][blockY-1] == GRAVEL){
+            if(map[blockX][blockZ][blockY-2] == AIR)
+                addFallingBlock(blockX, blockZ, blockY-1, 1);
+        }
+    }
+
+    if(blockX>0){
+        if(map[blockX-1][blockZ][blockY] == SAND || map[blockX-1][blockZ][blockY] == GRAVEL){
+            if(blockY>0){
+                if(map[blockX-1][blockZ][blockY-1] == AIR)
+                    addFallingBlock(blockX-1, blockZ, blockY, 1);
+            }
+        }
+    }
+
+    if(blockZ>0){
+        if(map[blockX][blockZ-1][blockY] == SAND || map[blockX][blockZ-1][blockY] == GRAVEL){
+            if(blockY>0){
+                if(map[blockX][blockZ-1][blockY-1] == AIR)
+                    addFallingBlock(blockX, blockZ-1, blockY, 1);
+            }
+        }
+    }
+
+    if(map[blockX][blockZ][blockY] == SAND || map[blockX][blockZ][blockY] == GRAVEL){
+        if(blockY>0){
+            if(map[blockX][blockZ][blockY-1] == AIR){
+                addFallingBlock(blockX, blockZ, blockY, 1);
+            }
+        }
+    }
+
+    if(blockZ<sizeZ-1){
+        if(map[blockX][blockZ+1][blockY] == SAND || map[blockX][blockZ+1][blockY] == GRAVEL){
+            if(blockY>0){
+                if(map[blockX][blockZ+1][blockY-1] == AIR)
+                    addFallingBlock(blockX, blockZ+1, blockY, 1);
+            }
+        }
+    }
+
+    if(blockX<sizeX-1){
+        if(map[blockX+1][blockZ][blockY] == SAND || map[blockX+1][blockZ][blockY] == GRAVEL){
+            if(blockY>0){
+                if(map[blockX+1][blockZ][blockY-1] == AIR)
+                    addFallingBlock(blockX+1, blockZ, blockY, 1);
+            }
+        }
+    }
+
+    if(blockY<sizeY-1){
+        if(map[blockX][blockZ][blockY+1] == SAND || map[blockX][blockZ][blockY+1] == GRAVEL){
+            if(blockY>0){
+                if(map[blockX][blockZ][blockY] == AIR)
+                    addFallingBlock(blockX, blockZ, blockY+1, 1);
+            }
+        }
     }
 }
 
