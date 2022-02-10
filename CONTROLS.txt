@@ -1,0 +1,36 @@
+CONTROLS
+--------
+
+selection / block placement
+---------------------------
+
+y=          = cycle block selection left
+window      = cycle block selection right
+
+up arrow    = move selection box north
+down arrow  = move selection box south
+left arrow  = move selection box west
+right arrow = move selection box east
+trace       = move selection box down
+graph       = move selection box up
+
+2nd         = place block
+del         = remove block
+
+
+character movement (currently disabled)
+---------------------------------------
+
+1 = move character south
+7 = move character west
+9 = move character north
+3 = move character east
+4 = move character down (if block clipping is off)
+6 = move character up (if block clipping is off)
+
+
+other
+-----
+
+enter = exit program
+
