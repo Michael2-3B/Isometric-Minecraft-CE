@@ -10,9 +10,19 @@ However I just added map editing and am working on that currently
 
 Latest update: Falling blocks! Sand and gravel now are affected by gravity:
 
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render033.gif)
+
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render032.gif)
 
+Shadows:
+
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.png)
+
+Map editing:
+
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render031.gif)
+
+Player Movement:
 
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render024.gif)
 
