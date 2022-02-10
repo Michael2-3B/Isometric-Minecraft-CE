@@ -28,7 +28,8 @@
 
 /* Put your function prototypes here */
 void generateMap(int mapNum);
-void drawMap(int startX, int startY, int startZ);
+void drawMap(int startX, int startY, int startZ, int angle);
+void mapRotationChange();
 void drawCoordinates();
 void drawBlockSelection();
 void playerMovement();
@@ -319,6 +320,8 @@ int selectionC = 0;
 
 int selectionX, selectionY;
 
+int drawAngle = 0;
+
 void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
@@ -333,10 +336,15 @@ void main(void) {
 
     gfx_FillScreen(5);
 
-    generateMap(1); //world 1 is a flat grass world - 2 layers of stone/coal, 1 layer of dirt, 1 layer of grass
+    generateMap(0);
+    //map 0 - dynamic terrain
+    //map 1 - flat grass world
+    //map 2 - void world
+    //map 3 - floating sand world
+
     //DO NOT LOAD MAP 3. IT IS A FLOATING SAND WORLD AND IF YOU MESS WITH THE SAND YOU WILL (CURRENTLY) GET A RAM CLEAR
 
-    drawMap(0,0,0);
+    drawMap(0,0,0,drawAngle);
 
     playerX = gridToScreenX(playerGridA, playerGridB);
     playerY = gridToScreenY(playerGridA, playerGridB, playerGridC);
@@ -357,6 +365,8 @@ void main(void) {
 
     do{
         kb_Scan();
+
+        mapRotationChange();
 
         blockSelectionChange();
 
@@ -494,12 +504,62 @@ void generateMap(int mapNum){
 }
 
 
-void drawMap(int startX, int startZ, int startY){
+void drawMap(int startX, int startZ, int startY, int angle){
+    int x1 = 0;
+    int x2 = 0;
+    int xChange = 0;
+
+    int z1 = 0;
+    int z2 = 0;
+    int zChange = 0;
+
+    if(angle == 0){ //from +x, +z (southeast/front corner)
+
+        x1 = startX;
+        x2 = sizeX-1;
+        xChange = 1;
+
+        z1 = startZ;
+        z2 = sizeZ-1;
+        zChange = 1;
+
+    } else if(angle == 1){ //from +x, -z (southwest/left corner)
+
+        x1 = startX;
+        x2 = sizeX-1;
+        xChange = 1;
+
+        z1 = sizeZ-1;
+        z2 = startZ;
+        zChange = -1;
+
+    } else if(angle == 2){ //from -x, -z (northwest/back corner)
+
+        x1 = sizeX-1;
+        x2 = startX;
+        xChange = -1;
+
+        z1 = sizeZ-1;
+        z2 = startZ;
+        zChange = -1;
+
+    } else if(angle == 3){ //from -x, +z (northeast/right corner)
+
+        x1 = sizeX-1;
+        x2 = startX;
+        xChange = -1;
+
+        z1 = startZ;
+        z2 = sizeZ-1;
+        zChange = 1;
+
+    }
+
     for(c=startY; c<sizeY; c++){
-        for(a=startX; a<sizeX; a++){
-            for(b=startZ; b<sizeZ; b++){
+        for(a=x1; a!=x2+xChange; a+=xChange){
+            for(b=z1; b!=z2+zChange; b+=zChange){
                 if(map[a][b][c] == NULL) continue;
-                if(a<sizeX-1 && b<sizeZ-1 && c<sizeY-1) if(map[a+1][b][c]>=100 && map[a][b+1][c]>=100 && map[a][b][c+1]>=100) continue;
+                if(a!=x2 && b!=z2 && c<sizeY-1) if(map[a+xChange][b][c]>=100 && map[a][b+zChange][c]>=100 && map[a][b][c+1]>=100) continue;
 
                 x = gridToScreenX(a,b);
                 y = gridToScreenY(a,b,c);
@@ -510,6 +570,38 @@ void drawMap(int startX, int startZ, int startY){
             }
 
         }
+    }
+}
+
+void mapRotationChange(){
+    bool flag = false;
+    if(kb_Data[6]){
+        key = kb_Data[6];
+        if(key == kb_Add){
+            drawAngle++;
+            if(drawAngle > 3)
+                drawAngle = 0;
+            flag = true;
+        } else if(key == kb_Sub){
+            drawAngle--;
+            if(drawAngle < 0)
+                drawAngle = 3;
+            flag = true;
+        }
+    }
+    if(flag == true){
+        gfx_FillScreen(5);
+        drawMap(0,0,0,drawAngle);
+        drawBlockSelection();
+        
+        selectionX = gridToScreenX(selectionA, selectionB);
+        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+        gfx_GetSprite(behind_selection, selectionX, selectionY);
+
+        gfx_TransparentSprite(selection_box, selectionX, selectionY);
+
+        gfx_BlitBuffer();
     }
 }
 
@@ -622,7 +714,7 @@ void playerMovement(){
 
         gfx_TransparentSprite(character_sprites[character], playerX, playerY);
 
-        drawMap((int)playerGridA+1, (int)playerGridB+1, (int)playerGridC);
+        drawMap((int)playerGridA+1, (int)playerGridB+1, (int)playerGridC, drawAngle);
 
         gfx_BlitBuffer();
 
@@ -736,7 +828,7 @@ void blockPlacement(){
                 }
 
                 gfx_FillScreen(5);
-                drawMap(0,0,0);
+                drawMap(0,0,0,drawAngle);
                 drawBlockSelection();
                 
                 selectionX = gridToScreenX(selectionA, selectionB);
@@ -773,10 +865,36 @@ void blockPlacement(){
 }
 
 int gridToScreenX(int gridX, int gridZ){
+    int x = gridX;
+
+    if(drawAngle == 1){
+        gridX = 7-gridZ;
+        gridZ = x;
+    } else if(drawAngle == 2){
+        gridX = 7-gridX;
+        gridZ = 7-gridZ;
+    } else if(drawAngle == 3){
+        gridX = gridZ;
+        gridZ = 7-x;
+    }
+
     return midX-(gridX*12)+(gridZ*12);
 }
 
 int gridToScreenY(int gridX, int gridZ, int gridY){
+    int x = gridX;
+
+    if(drawAngle == 1){
+        gridX = 7-gridZ;
+        gridZ = x;
+    } else if(drawAngle == 2){
+        gridX = 7-gridX;
+        gridZ = 7-gridZ;
+    } else if(drawAngle == 3){
+        gridX = gridZ;
+        gridZ = 7-x;
+    }
+
     return midY+(gridZ*6)+(gridX*6)-(gridY*15)+gridY;
 }
 
@@ -816,7 +934,7 @@ void blockPhysics(){
             }
 
             gfx_FillScreen(5);
-            drawMap(0,0,0);
+            drawMap(0,0,0,drawAngle);
             drawBlockSelection();
 
             selectionX = gridToScreenX(selectionA, selectionB);

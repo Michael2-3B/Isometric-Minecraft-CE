@@ -29,6 +29,11 @@ character movement (currently disabled)
 6 = move character up (if block clipping is off)
 
 
+map rotation
+------------
+- (minus)  = rotate map clockwise
++ (plus)   = rotate map counter-clockwise
+
 other
 -----
 
