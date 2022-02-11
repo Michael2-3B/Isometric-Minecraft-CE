@@ -31,6 +31,7 @@ void generateMap(int mapNum);
 void generateShadowMap();
 void drawMap(int startX, int startY, int startZ, int angle);
 void mapRotationChange();
+void changeDrawPosition();
 void drawCoordinates();
 void drawBlockSelection();
 void playerMovement();
@@ -42,7 +43,7 @@ int gridToScreenX(int gridX, int gridZ);
 int gridToScreenY(int gridX, int gridZ, int gridY);
 void blockPhysics();
 void addFallingBlock(int blockX, int blockZ, int blockY, int velocity);
-void removeFallingBlock(int blockX, int blockZ, int blockY, int index);
+void removeFallingBlock(int index);
 void updateSurroundingBlocks(int blockX, int blockZ, int blockY);
 void print_string_centered(char *str, int y, int offset, uint8_t c);
 
@@ -265,14 +266,14 @@ const gfx_sprite_t *blocks[] = {
 #define COBBLESTONE 111
 
 const gfx_sprite_t *shadows[] = {
+    shadow_block_100percent,
+    shadow_block_88percent,
+    shadow_block_75percent,
+    shadow_block_63percent,
     shadow_block_50percent,
+    shadow_block_37percent,
     shadow_block_25percent,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    shadow_block_12percent,
     NULL,
     NULL,
     NULL,
@@ -283,9 +284,15 @@ const gfx_sprite_t *shadows[] = {
     NULL,
 };
 
-#define SHADOW_50 0
-#define SHADOW_25 1
-#define MAX_LIGHT 5
+#define SHADOW_100 0
+#define SHADOW_88 1
+#define SHADOW_75 2
+#define SHADOW_63 3
+#define SHADOW_50 4
+#define SHADOW_37 5
+#define SHADOW_25 6
+#define SHADOW_12 7
+#define MAX_LIGHT 10
 
 const gfx_sprite_t *character_sprites[4] = {
     /* 0 */ steven_north_1,
@@ -307,9 +314,9 @@ int a, b, c, i, j, x, y;
 int direction;
 int alternate = 0;
 
-const int midX = 146;
+int midX = 146;
 //const int midY = -30; //for 36x36map
-const int midY = 120; //for 8x8 map
+int midY = 120; //for 8x8 map
 
 int playerX, playerY;
 
@@ -354,7 +361,7 @@ void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
 
-    worldTime = 1;
+    worldTime = 1; //0 is day, 1 is night
     if(worldTime == 0){
         skyColor = 5;
     } else {
@@ -404,6 +411,8 @@ void main(void) {
         kb_Scan();
 
         mapRotationChange();
+
+        changeDrawPosition();
 
         blockSelectionChange();
 
@@ -545,7 +554,7 @@ void generateShadowMap(){
         for(b=0; b<sizeZ; b++){
             for(c=0; c<sizeY; c++){
                 if(worldTime == 1){
-                    shadowMap[a][b][c] = SHADOW_50;
+                    shadowMap[a][b][c] = SHADOW_100;
                 } else {
                     shadowMap[a][b][c] = MAX_LIGHT;
                 }
@@ -648,6 +657,52 @@ void mapRotationChange(){
         drawMap(0,0,0,drawAngle);
         drawBlockSelection();
         
+        selectionX = gridToScreenX(selectionA, selectionB);
+        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+        gfx_GetSprite(behind_selection, selectionX, selectionY);
+
+        gfx_TransparentSprite(selection_box, selectionX, selectionY);
+
+        gfx_BlitBuffer();
+    }
+}
+
+void changeDrawPosition(){
+    bool flag = false;
+    int change = 5;
+
+    if(kb_Data[1]){
+        key = kb_Data[1];
+        if(key == kb_Mode){
+            midY -= change;
+            flag = true;
+        }
+    } else if(kb_Data[2]){
+        key = kb_Data[2];
+        if(key == kb_Alpha){
+            midX -= change;
+            flag = true;
+        }
+    } else if(kb_Data[3]){
+        key = kb_Data[3];
+        if(key == kb_GraphVar){
+            midY += change;
+            flag = true;
+        }
+    } else if(kb_Data[4]){
+        key = kb_Data[4];
+        if(key == kb_Stat){
+            midX += change;
+            flag = true;
+        }
+    }
+
+    if(flag == true){
+        gfx_FillScreen(skyColor);
+        drawMap(0,0,0,drawAngle);
+        drawBlockSelection();
+
         selectionX = gridToScreenX(selectionA, selectionB);
         selectionY = gridToScreenY(selectionA, selectionB, selectionC);
 
@@ -888,24 +943,6 @@ void blockPlacement(){
                 gfx_BlitBuffer();
 
                 updateSurroundingBlocks(selectionA, selectionB, selectionC);
-
-                /*
-                //falling blocks
-                if(i==AIR && selectionC<sizeY-1){
-                    if(map[selectionA][selectionB][selectionC+1] == SAND || map[selectionA][selectionB][selectionC+1] == GRAVEL){
-                        //deleted a block, so now updating surrounding blocks
-
-                        updateSurroundingBlocks(selectionA, selectionB, selectionC);
-                    }
-                } else if((i==SAND || i==GRAVEL) && selectionC>0){
-                    if(map[selectionA][selectionB][selectionC-1] == AIR){
-                        //placed a gravity block
-                        addFallingBlock(selectionA, selectionB, selectionC, 1);
-
-                        updateSurroundingBlocks()
-                    }
-                }
-                */
             }
         }
     }
@@ -923,7 +960,8 @@ void lightUpdates(){
         while(map[selectionA][selectionB][j] == AIR && j>0) j--;
 
         if(i != AIR){
-            shadowMap[selectionA][selectionB][j] = SHADOW_50;
+            if(worldTime == 0)
+                shadowMap[selectionA][selectionB][j] = SHADOW_100;
         } else {
             iter = j;
             while(iter<sizeY-1){
@@ -937,6 +975,7 @@ void lightUpdates(){
         }
         
     }
+
     if(i==TORCH){
         x1 = selectionA - MAX_LIGHT;
         if(x1<0) x1 = 0;
@@ -1030,11 +1069,11 @@ void blockPhysics(){
 
                     map[blockX][blockZ][blockY-1] = fallingBlocks[j][0];
                 } else {
-                    removeFallingBlock(blockX, blockZ, blockY, j);
+                    removeFallingBlock(j);
                     updateSurroundingBlocks(blockX, blockZ, blockY);
                 }
             } else {
-                removeFallingBlock(blockX, blockZ, blockY, j);
+                removeFallingBlock(j);
                 updateSurroundingBlocks(blockX, blockZ, blockY);
             }
 
@@ -1066,7 +1105,7 @@ void addFallingBlock(int blockX, int blockZ, int blockY, int velocity){
     fallingBlocks[index][5] = 0;
 }
 
-void removeFallingBlock(int blockX, int blockZ, int blockY, int index){
+void removeFallingBlock(int index){
 
     fallingBlocks[index][0] = -1;
     fallingBlocks[index][1] = -1;

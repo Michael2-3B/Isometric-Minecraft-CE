@@ -1,5 +1,6 @@
 CONTROLS
 --------
+there's a lot, and they're fairly confusing right now, so bear with me
 
 selection / block placement
 ---------------------------
@@ -34,8 +35,16 @@ map rotation
 - (minus)  = rotate map clockwise
 + (plus)   = rotate map counter-clockwise
 
+
+map positioning
+---------------
+alpha        = move map left
+stat         = move map right
+mode         = move map up
+X,T,theta,n  = move map down
+
+
 other
 -----
-
 enter = exit program
 
