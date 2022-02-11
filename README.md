@@ -2,15 +2,15 @@
 ## Basically, minecraft but isometric. Coded in C for the TI 84+ CE.  
 
 ### Current Features (newest additions first):
-* Torch Lighting, and night time  
+* Torch lighting (and night time)  
 * Shadows  
-* Map Rotation
+* Map Rotation  
 * Block gravity/physics (for sand and gravel)  
 * Placing and breaking blocks  
 * Player and player movement (currently disabled, and a bit buggy)  
 * Dynamic, random terrain  
 
-The program is currently in progress, so bugs are to be expected, and some features are not fully implemented properly yet
+The program is currently in progress, so bugs are to be expected, and many features are not fully or properly implemented yet.  
 
 **LATEST UPDATE:** Torch lighting and shadows!  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render038.gif)  
