@@ -13,7 +13,7 @@
 The program is currently in progress, so bugs are to be expected, and some features are not fully implemented properly yet
 
 **LATEST UPDATE:** Torch lighting and shadows!  
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render036.gif)  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render038.gif)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.png)  
 
 
