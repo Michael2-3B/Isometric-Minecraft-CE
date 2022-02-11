@@ -1,33 +1,38 @@
-# Iso-Render
+# Iso-Render  
+## Basically, minecraft but isometric. Coded in C for the TI 84+ CE.  
 
-Rendering beautiful isometric terrain, using sprites, in C on the TI-84+ CE.
+### Current Features (newest additions first):
+* Torch Lighting, and night time  
+* Shadows  
+* Map Rotation
+* Block gravity/physics (for sand and gravel)  
+* Placing and breaking blocks  
+* Player and player movement (currently disabled, and a bit buggy)  
+* Dynamic, random terrain  
 
-Player positioning/movement is a bit borked right now, so I've disabled the player for the time being.
+The program is currently in progress, so bugs are to be expected, and some features are not fully implemented properly yet
 
-However I just added map editing and am working on that currently.
+**LATEST UPDATE:** Torch lighting and shadows!  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render036.gif)  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.png)  
 
-LATEST UPDATE: Falling blocks! Sand and gravel now are affected by gravity:
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render033.gif)
+Block physics! Sand and gravel now are affected by gravity:  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render033.gif)  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render032.gif)  
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render032.gif)
 
-Map Rotation:
+Map Rotation:  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render035.gif)  
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render035.gif)
 
-Shadows:
+Map editing:  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render031.gif)  
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render034.png)
 
-Map editing:
+Player Movement (clipping disabled)  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render024.gif)  
 
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render031.gif)
 
-Player Movement (clipping disabled)
-
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render024.gif)
-
-A bigger map:
-
-![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render028.png)
+An example of a bigger map:  
+![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render028.png)  
