@@ -1,4 +1,4 @@
-# Iso-Render  
+# Isometric-Minecraft-CE 
 ## Basically, minecraft but isometric. Coded in C for the TI 84+ CE.  
 
 ### Current Features (newest additions first):
