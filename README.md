@@ -15,18 +15,18 @@
 
 The program is currently in progress, so bugs are to be expected, and many features are not fully or properly implemented yet.  
 
-**Latest Screenshots:** (dynamic lighting, shadows, daytime/nighttime, brightness)
+**Latest Screenshots:** (dynamic lighting, shadows, daytime/nighttime, brightness)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render048.gif)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render047.gif)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render046.png)  
 
 
-Fire and chest animations:
+Fire and chest animations:  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render041.gif)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render042.gif)  
 
 
-Block physics: (sand and gravel are affected by gravity)
+Block physics: (sand and gravel are affected by gravity)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render033.gif)  
 ![A Screenshot](https://raw.githubusercontent.com/Michael2-3B/Iso-Render/master/screenshots/render032.gif)  
 
