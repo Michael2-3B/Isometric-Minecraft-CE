@@ -3,51 +3,117 @@ opened convpng.ini
 --- logo_gfx (C) ---
 building palette with [256] available indices ...
 built palette with [256] indices.
-palette quality : 99.05%
+palette quality : 99.31%
 transparent color index : 0
 transparent color : 0xFFFF
-40:
- water_full : 99.86%
- water_surface : 99.86%
- lava_full : 97.73%
- lava_surface : 97.75%
+102:
+ water_full : 98.97%
+ water_surface : 99.07%
+ lava_full : 93.13%
+ lava_surface : 93.27%
  glass_block : 100.00%
  glass_pane_west_to_east : 100.00%
  glass_pane_south_to_north : 100.00%
- oak_leaves : 95.52%
- stone_brick_stairs_east : 100.00%
- stone_brick_stairs_east_2 : 100.00%
- stone_stairs_east : 100.00%
- brick_stairs_east : 95.09%
- stone_brick_stairs_south_2 : 99.89%
- brick : 94.66%
- coal_ore : 100.00%
- stone : 100.00%
- dirt : 99.92%
- grass_block : 99.76%
- stone_brick : 99.24%
- stone_brick_2 : 99.99%
- oak_log : 97.12%
- oak_planks : 98.36%
- sand : 97.37%
- gravel : 99.17%
- cobblestone : 99.79%
- pink_flower : 99.12%
- torch : 87.84%
- steven_north_1 : 99.91%
- steven_east_1 : 99.71%
- steven_south_1 : 99.70%
- steven_west_1 : 99.91%
+ oak_leaves : 92.62%
+ stone_stairs_east : 99.14%
+ brick_stairs_east : 89.40%
+ brick : 88.94%
+ coal_ore : 98.58%
+ stone : 98.73%
+ dirt : 99.58%
+ grass_block : 98.77%
+ stone_brick : 97.00%
+ oak_log : 94.20%
+ oak_planks : 95.55%
+ sand : 90.01%
+ gravel : 95.61%
+ cobblestone : 97.32%
+ stone_25p : 99.27%
+ stone_25p_top : 99.71%
+ stone_25p_right : 99.76%
+ stone_25p_left : 99.32%
+ oak_door_south : 98.73%
+ oak_door_south_bottom : 99.28%
+ oak_door_south_top : 98.44%
+ oak_door_east_2 : 98.73%
+ oak_door_east_2_bottom : 99.28%
+ oak_door_east_2_top : 98.44%
+ ladder_north : 94.51%
+ pink_flower : 96.40%
+ torch : 82.58%
+ steven_north_1 : 99.42%
+ steven_east_1 : 99.31%
+ steven_south_1 : 99.31%
+ steven_west_1 : 99.42%
  selection_box : 100.00%
- shadow_block_12percent : 100.00%
- shadow_block_25percent : 100.00%
- shadow_block_37percent : 100.00%
- shadow_block_50percent : 100.00%
- shadow_block_63percent : 100.00%
- shadow_block_75percent : 100.00%
- shadow_block_88percent : 100.00%
- shadow_block_100percent : 100.00%
+ selection_tile : 100.00%
+ shadow_left_12p : 100.00%
+ shadow_left_25p : 100.00%
+ shadow_left_37p : 100.00%
+ shadow_left_50p : 100.00%
+ shadow_left_63p : 100.00%
+ shadow_left_75p : 100.00%
+ shadow_left_88p : 100.00%
+ shadow_left_100p : 100.00%
+ shadow_right_12p : 100.00%
+ shadow_right_25p : 100.00%
+ shadow_right_37p : 100.00%
+ shadow_right_50p : 100.00%
+ shadow_right_63p : 100.00%
+ shadow_right_75p : 100.00%
+ shadow_right_88p : 100.00%
+ shadow_right_100p : 100.00%
+ shadow_floor_12p : 100.00%
+ shadow_floor_25p : 100.00%
+ shadow_floor_37p : 100.00%
+ shadow_floor_50p : 100.00%
+ shadow_floor_63p : 100.00%
+ shadow_floor_75p : 100.00%
+ shadow_floor_88p : 100.00%
+ shadow_floor_100p : 100.00%
+ fire_1 : 97.85%
+ fire_2 : 97.86%
+ fire_3 : 98.06%
+ fire_4 : 98.90%
+ fire_5 : 98.72%
+ fire_6 : 98.46%
+ fire_7 : 97.93%
+ fire_8 : 96.23%
+ fire_9 : 98.35%
+ fire_10 : 98.09%
+ fire_11 : 98.50%
+ fire_12 : 98.88%
+ fire_13 : 98.62%
+ fire_14 : 98.83%
+ fire_15 : 98.11%
+ fire_16 : 97.78%
+ chest_1 : 98.73%
+ chest_2 : 98.49%
+ chest_3 : 99.18%
+ chest_4 : 99.09%
+ chest_5 : 99.19%
+ chest_6 : 99.10%
+ chest_7 : 98.91%
+ chest_8 : 99.09%
+ chest_9 : 99.12%
+ chest_10 : 99.12%
+ chest_11 : 99.15%
+ chest_12 : 99.23%
+ chest_13 : 99.31%
+ chest_14 : 99.32%
+ chest_15 : 99.35%
+ chest_16 : 99.40%
+ play : 99.77%
+ options : 99.62%
+ quitgame : 99.50%
+ playhover : 99.77%
+ optionshover : 99.61%
+ quitgamehover : 99.50%
 
 converted in 0 s
+
+[warning] image quality might be too low.
+please try grouping similar images, reducing image colors, 
+or selecting a better palette if conversion is not ideal.
 
 finished!

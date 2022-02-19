@@ -22,13 +22,24 @@
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
+#include <debug.h>
 
 /* Include the sprite data */
 #include "gfx/logo_gfx.h"
 
 /* Put your function prototypes here */
+void drawMainMenu();
+bool checkTag(int blockID, int tagID);
+
+void changeBrightness();
+void drawMapToScreen(int startX, int startY, int startZ);
 void generateMap(int mapNum);
-void generateShadowMap();
+
+void generateLightMap();
+int max(int n1, int n2);
+int min(int n1, int n2);
+int calculateBlockLight(int blockX, int blockY, int blockZ);
+
 void drawMap(int startX, int startY, int startZ, int angle);
 void mapRotationChange();
 void changeDrawPosition();
@@ -38,7 +49,6 @@ void playerMovement();
 void selectionMovement();
 void blockSelectionChange();
 void blockPlacement();
-void lightUpdates();
 int gridToScreenX(int gridX, int gridZ);
 int gridToScreenY(int gridX, int gridZ, int gridY);
 void blockPhysics();
@@ -51,7 +61,11 @@ void print_string_centered(char *str, int y, int offset, uint8_t c);
 
 kb_key_t key;
 gfx_TempSprite(behind_character, 27, 43);
-gfx_TempSprite(behind_selection, 27, 29);
+gfx_TempSprite(behind_selection_box, 27, 29);
+gfx_TempSprite(behind_selection_tile, 27, 29);
+
+gfx_TempSprite(behind_fire_0, 27, 29);
+
 
 int fallingBlocksSize = 60;
 int fallingBlocks[60][6] = {
@@ -130,21 +144,21 @@ const gfx_sprite_t *blocks[] = {
     /* 008 */ oak_leaves,
     /* 009 */ pink_flower,
     /* 010 */ torch,
-    /* 011 */ NULL,
-    /* 012 */ NULL,
-    /* 013 */ NULL,
-    /* 014 */ NULL,
-    /* 015 */ NULL,
-    /* 016 */ NULL,
-    /* 017 */ NULL,
-    /* 018 */ NULL,
+    /* 011 */ oak_door_south_bottom,
+    /* 012 */ oak_door_south_top,
+    /* 013 */ oak_door_east_2_bottom,
+    /* 014 */ oak_door_east_2_top,
+    /* 015 */ fire_1,
+    /* 016 */ chest_1,
+    /* 017 */ ladder_north,
+    /* 018 */ stone_25p,
     /* 019 */ NULL,
     /* 020 */ NULL,
     /* 021 */ NULL,
     /* 022 */ NULL,
     /* 023 */ NULL,
-    /* 024 */ stone_brick_stairs_east,
-    /* 025 */ stone_brick_stairs_east_2,
+    /* 024 */ NULL,
+    /* 025 */ NULL,
     /* 026 */ stone_stairs_east,
     /* 027 */ brick_stairs_east,
     /* 028 */ NULL,
@@ -162,7 +176,7 @@ const gfx_sprite_t *blocks[] = {
     /* 040 */ NULL,
     /* 041 */ NULL,
     /* 042 */ NULL,
-    /* 043 */ stone_brick_stairs_south_2,
+    /* 043 */ NULL,
     /* 044 */ NULL,
     /* 045 */ NULL,
     /* 046 */ NULL,
@@ -225,7 +239,7 @@ const gfx_sprite_t *blocks[] = {
     /* 103 */ dirt,
     /* 104 */ grass_block,
     /* 105 */ stone_brick,
-    /* 106 */ stone_brick_2,
+    /* 106 */ NULL,
     /* 107 */ oak_log,
     /* 108 */ oak_planks,
     /* 109 */ sand,
@@ -244,6 +258,14 @@ const gfx_sprite_t *blocks[] = {
 #define OAK_LEAVES 8
 #define PINK_FLOWER 9
 #define TORCH 10
+#define OAK_DOOR_SOUTH_BOTTOM 11
+#define OAK_DOOR_SOUTH_TOP 12
+#define OAK_DOOR_EAST_2_BOTTOM 13
+#define OAK_DOOR_EAST_2_TOP 14
+#define FIRE 15
+#define CHEST 16
+#define LADDER 17
+#define STONE_25P 18
 
 #define STONE_BRICK_STAIRS_EAST 24
 #define STONE_BRICK_STAIRS_EAST_2 25
@@ -258,22 +280,38 @@ const gfx_sprite_t *blocks[] = {
 #define DIRT 103
 #define GRASS_BLOCK 104
 #define STONE_BRICK 105
-#define STONE_BRICK_2 106
+
 #define OAK_LOG 107
 #define OAK_PLANKS 108
 #define SAND 109
 #define GRAVEL 110
 #define COBBLESTONE 111
 
-const gfx_sprite_t *shadows[] = {
-    shadow_block_100percent,
-    shadow_block_88percent,
-    shadow_block_75percent,
-    shadow_block_63percent,
-    shadow_block_50percent,
-    shadow_block_37percent,
-    shadow_block_25percent,
-    shadow_block_12percent,
+//blockTags is parallel to blocks array
+
+/*
+bool blockTags[][] = {
+    //Gravity, Rotatable, Flammable, Non-Full, etc
+    {0, 0, 0, 1},
+    {0, 0, 0, 1},
+    //etc
+};
+*/
+
+#define GRAVITY 0
+#define ROTATABLE 1
+#define FLAMMABLE 2
+#define NON_FULL 3
+
+const gfx_sprite_t *shadowLeft[] = {
+    shadow_left_100p,
+    shadow_left_88p,
+    shadow_left_75p,
+    shadow_left_63p,
+    shadow_left_50p,
+    shadow_left_37p,
+    shadow_left_25p,
+    shadow_left_12p,
     NULL,
     NULL,
     NULL,
@@ -284,15 +322,96 @@ const gfx_sprite_t *shadows[] = {
     NULL,
 };
 
-#define SHADOW_100 0
-#define SHADOW_88 1
-#define SHADOW_75 2
-#define SHADOW_63 3
-#define SHADOW_50 4
-#define SHADOW_37 5
-#define SHADOW_25 6
-#define SHADOW_12 7
-#define MAX_LIGHT 10
+const gfx_sprite_t *shadowRight[] = {
+    shadow_right_100p,
+    shadow_right_88p,
+    shadow_right_75p,
+    shadow_right_63p,
+    shadow_right_50p,
+    shadow_right_37p,
+    shadow_right_25p,
+    shadow_right_12p,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
+const gfx_sprite_t *shadowFloor[] = {
+    shadow_floor_100p,
+    shadow_floor_88p,
+    shadow_floor_75p,
+    shadow_floor_63p,
+    shadow_floor_50p,
+    shadow_floor_37p,
+    shadow_floor_25p,
+    shadow_floor_12p,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
+#define LIGHT_LEVEL_0 0
+#define LIGHT_LEVEL_50 4
+
+#define TORCH_LIGHT 8
+#define LAVA_LIGHT 8
+#define FIRE_LIGHT 8
+#define MAX_LIGHT 8
+
+const gfx_sprite_t *fires[] = {
+    fire_1,
+    fire_2,
+    fire_3,
+    fire_4,
+    fire_5,
+    fire_6,
+    fire_7,
+    fire_8,
+    fire_9,
+    fire_10,
+    fire_11,
+    fire_12,
+    fire_13,
+    fire_14,
+    fire_15,
+    fire_16
+};
+
+int fireNum = 0;
+
+const gfx_sprite_t *chests[] = {
+    chest_1,
+    chest_2,
+    chest_3,
+    chest_4,
+    chest_5,
+    chest_6,
+    chest_7,
+    chest_8,
+    chest_9,
+    chest_10,
+    chest_11,
+    chest_12,
+    chest_13,
+    chest_14,
+    chest_15,
+    chest_16
+};
+
+int chestOpening[8][8][10][2];
+
+//int chestNum = 0;
+//int chestOpening = 0;
 
 const gfx_sprite_t *character_sprites[4] = {
     /* 0 */ steven_north_1,
@@ -301,10 +420,10 @@ const gfx_sprite_t *character_sprites[4] = {
     /* 3 */ steven_west_1
 };
 
-#define NORTH 0;
-#define EAST 1;
-#define SOUTH 2;
-#define WEST 3;
+#define NORTH 0
+#define EAST 1
+#define SOUTH 2
+#define WEST 3
 
 int character = 1;
 int playerDirection = 1;
@@ -340,7 +459,8 @@ const int sizeY = 10;
 
 int map[8][8][10];
 
-int shadowMap[8][8][10];
+int skyLightMap[8][8][10];
+int blockLightMap[8][8][10];
 
 int blockSelection = BRICK;
 int frameCount = 0;
@@ -351,22 +471,31 @@ int selectionB = 7;
 int selectionC = 0;
 
 int selectionX, selectionY;
+int selectionY_tile;
 
 int drawAngle = 0;
 
 int skyColor;
 int worldTime;
+int worldTimeChange;
+int brightness = 0;
+
+bool fireInWorld = false;
+
+bool exitGame = false;
 
 void main(void) {
     /* Fill in the body of the main function here */
     srand(rtc_Time(NULL));
 
-    worldTime = 1; //0 is day, 1 is night
+    worldTime = 0; //0 is day, 8 is night
     if(worldTime == 0){
         skyColor = 5;
     } else {
-        skyColor = 6;
+        skyColor = 13;
     }
+
+    dbg_sprintf(dbgout, "Beginning...\n");
 
     gfx_Begin();
     gfx_SetDrawBuffer();
@@ -376,61 +505,226 @@ void main(void) {
     gfx_SetTextScale(1,1);
     gfx_SetPalette(logo_gfx_pal, sizeof_logo_gfx_pal, 0);
 
-    gfx_FillScreen(skyColor);
+    drawMainMenu();
 
-    generateMap(1);
-    //map 0 - dynamic terrain
-    //map 1 - flat grass world
-    //map 2 - void world
-    //map 3 - floating sand world
+    if(exitGame == false){
 
-    //DO NOT LOAD MAP 3. IT IS A FLOATING SAND WORLD AND IF YOU MESS WITH THE SAND YOU WILL (CURRENTLY) GET A RAM CLEAR
+        dbg_sprintf(dbgout, "Generating map...\n");
 
-    generateShadowMap();
+        generateMap(1);
+        //map 0 - dynamic terrain
+        //map 1 - flat grass world
+        //map 2 - void world
+        //map 3 - floating sand world
+        //map 4 - underground room with transparent stone corner
 
-    drawMap(0,0,0,drawAngle);
+        //DO NOT LOAD MAP 3. IT IS A FLOATING SAND WORLD AND IF YOU MESS WITH THE SAND YOU WILL (CURRENTLY) GET A RAM CLEAR
 
-    playerX = gridToScreenX(playerGridA, playerGridB);
-    playerY = gridToScreenY(playerGridA, playerGridB, playerGridC);
+        dbg_sprintf(dbgout, "Calculating world light...\n");
 
-    selectionX = gridToScreenX(selectionA, selectionB);
-    selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+        generateLightMap();
 
-    //gfx_GetSprite(behind_character, playerX, playerY);
-    //gfx_TransparentSprite(character_sprites[character], playerX, playerY);
+        playerX = gridToScreenX(playerGridA, playerGridB);
+        playerY = gridToScreenY(playerGridA, playerGridB, playerGridC);
 
-    gfx_GetSprite(behind_selection, selectionX, selectionY);
-    gfx_TransparentSprite(selection_box, selectionX, selectionY);
+        selectionX = gridToScreenX(selectionA, selectionB);
+        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
 
-    //drawCoordinates();
-    drawBlockSelection();
 
-    gfx_BlitBuffer();
 
-    do{
-        kb_Scan();
+        //gfx_GetSprite(behind_character, playerX, playerY);
+        //gfx_TransparentSprite(character_sprites[character], playerX, playerY);
 
-        mapRotationChange();
+        //draw player coordinates?
 
-        changeDrawPosition();
+        dbg_sprintf(dbgout, "Drawing map to screen...\n");
 
-        blockSelectionChange();
+        drawMapToScreen(0,0,0);
 
-        selectionMovement();
+        do{
+            kb_Scan();
 
-        blockPlacement();
+            if(fireInWorld)
+                drawMapToScreen(0,0,0);
 
-        blockPhysics();
+            if(kb_Data[1]){
+                key = kb_Data[1];
+                if(key == kb_Zoom && map[selectionA][selectionB][selectionC] == CHEST && chestOpening[selectionA][selectionB][selectionC][0] == 0){
+                    if(chestOpening[selectionA][selectionB][selectionC][1] == 0){
+                        chestOpening[selectionA][selectionB][selectionC][1] = 1;
+                        chestOpening[selectionA][selectionB][selectionC][0] = 1;
+                    }
+                    if(chestOpening[selectionA][selectionB][selectionC][1] == 15){
+                        chestOpening[selectionA][selectionB][selectionC][1] = 14;
+                        chestOpening[selectionA][selectionB][selectionC][0] = -1;
+                    }
+                }
+            }
 
-        //playerMovement();
+            if(kb_Data[2]){
+                worldTimeChange = worldTime;
+                key = kb_Data[2];
+                if(key == kb_Store){
+                    worldTime = min(8, worldTime+1);
+                    skyColor = min(13, skyColor+1);
+                } else if(key == kb_Ln){
+                    worldTime = max(0, worldTime-1);
+                    skyColor = max(5, skyColor-1);
+                }
 
-    } while (kb_Data[6] != kb_Enter);
+                if(worldTime != worldTimeChange)
+                    drawMapToScreen(0,0,0);
+            }
 
+            changeBrightness();
+
+            if(chestOpening[selectionA][selectionB][selectionC][0] != 0){
+                drawMapToScreen(0,0,0);
+                chestOpening[selectionA][selectionB][selectionC][1] += chestOpening[selectionA][selectionB][selectionC][0];
+                if(chestOpening[selectionA][selectionB][selectionC][1] > 15){
+                    chestOpening[selectionA][selectionB][selectionC][1] = 15;
+                    chestOpening[selectionA][selectionB][selectionC][0] = 0;
+                }
+                if(chestOpening[selectionA][selectionB][selectionC][1] < 0){
+                    chestOpening[selectionA][selectionB][selectionC][1] = 0;
+                    chestOpening[selectionA][selectionB][selectionC][0] = 0;
+                }
+            }
+
+            mapRotationChange();
+
+            changeDrawPosition();
+
+            blockSelectionChange();
+
+            selectionMovement();
+
+            blockPlacement();
+
+            blockPhysics();
+
+            //playerMovement();
+
+        } while (kb_Data[6] != kb_Enter);
+
+    }
 
     gfx_End();
 }
 
 /* Put other functions here */
+
+void drawMainMenu(){
+
+    int startX = -12;
+    int button = 0;
+
+    do{
+
+        int alternate = 0;
+        for(y=240; y>-30; y-=20){
+            for(x=startX+alternate; x<320; x+=24){
+                gfx_TransparentSprite(grass_block, x, y);
+            }
+            if(alternate == 0){
+                alternate = 12;
+            } else {
+                alternate = 0;
+            }
+        }
+
+        startX -= 2;
+        if(startX == -36)
+            startX = -12;
+
+        print_string_centered("Isometric Minecraft", 40, 0, 0);
+
+        if(button == 0){
+            gfx_TransparentSprite(playhover, 79, 100);
+        } else {
+            gfx_TransparentSprite(play, 79, 100);
+        }
+
+        if(button == 1){
+            gfx_TransparentSprite(optionshover, 79, 140);
+        } else {
+            gfx_TransparentSprite(options, 79, 140);
+        }
+
+        if(button == 2){
+            gfx_TransparentSprite(quitgamehover, 79, 180);
+        } else {
+            gfx_TransparentSprite(quitgame, 79, 180);
+        }
+
+        gfx_BlitBuffer();
+
+        kb_Scan();
+
+        if(kb_Data[7]){
+            key = kb_Data[7];
+
+            if(key == kb_Up && button>0){
+                button--;
+            } else if(key == kb_Down && button<2){
+                button++;
+            }
+        }
+
+
+    } while (kb_Data[6] != kb_Enter);
+
+    if(button == 2)
+        exitGame = true;
+}
+
+bool checkTag(int blockID, int tagID){
+    //return blockTags[blockID][tagID];
+    return false;
+}
+
+void changeBrightness(){
+    if(kb_Data[6]){
+        key = kb_Data[6];
+        if(key == kb_Mul || key == kb_Div){
+            if(key == kb_Mul){
+                brightness = min(MAX_LIGHT, brightness+1);
+            } else if(key == kb_Div){
+                brightness = max(0, brightness-1);
+            }
+
+            drawMapToScreen(0,0,0);
+        }
+    }
+}
+
+void drawMapToScreen(int startX, int startY, int startZ){
+    int iter = selectionC;
+
+    if(startX == 0 && startY == 0 && startZ == 0){
+        gfx_FillScreen(skyColor);
+        drawBlockSelection();
+    }
+
+    drawMap(startX,startY,startZ,drawAngle);
+    
+    selectionX = gridToScreenX(selectionA, selectionB);
+    selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+
+    while(map[selectionA][selectionB][iter] != AIR && iter<sizeY-1){
+        iter++;
+    }
+
+    selectionY_tile = gridToScreenY(selectionA, selectionB, iter);
+
+    gfx_GetSprite(behind_selection_box, selectionX, selectionY);
+    gfx_GetSprite(behind_selection_tile, selectionX, selectionY_tile);
+
+    gfx_TransparentSprite(selection_box, selectionX, selectionY);
+    gfx_TransparentSprite(selection_tile, selectionX, selectionY_tile);
+
+    gfx_BlitBuffer();
+}
 
 void generateMap(int mapNum){
     if(mapNum == 0){ //dynamic terrain
@@ -536,8 +830,6 @@ void generateMap(int mapNum){
                 for(c=0; c<sizeY; c++){
                     if(c==0){
                         map[a][b][c] = STONE;
-                    } else if(c==1 && a>3 && b>3){
-                        map[a][b][c] = SHADOW_50;
                     } else if(c==7 && a>3 && b>3){
                         map[a][b][c] = SAND;
                     } else {
@@ -546,23 +838,162 @@ void generateMap(int mapNum){
                 }
             }
         }
-    }
-}
-
-void generateShadowMap(){
-    for(a=0; a<sizeX; a++){
-        for(b=0; b<sizeZ; b++){
-            for(c=0; c<sizeY; c++){
-                if(worldTime == 1){
-                    shadowMap[a][b][c] = SHADOW_100;
-                } else {
-                    shadowMap[a][b][c] = MAX_LIGHT;
+    } else if(mapNum == 4){ //underground room
+        for(a=0; a<sizeX; a++){
+            for(b=0; b<sizeZ; b++){
+                for(c=0; c<sizeY; c++){
+                    if(((a==0 || b==0) && c<sizeY-1) || c==0 || c==sizeY-2){
+                        if(randInt(0,7)==0){
+                            map[a][b][c] = COAL_ORE;
+                        } else {
+                            map[a][b][c] = STONE;
+                        }
+                    } else if(c>0 && c<sizeY-2 && ((a==sizeX-1 && b>0) || (b==sizeZ-1 && a>0))){
+                        map[a][b][c] = STONE_25P;
+                    }
                 }
             }
         }
     }
 }
 
+void generateLightMap(){
+    bool covered;
+    int blockLight, skyLight, currentBlock;
+
+    int scanIter;
+    int sky1, sky2, sky3, sky4;
+    int block1, block2, block3, block4;
+
+    // Step 1 of Lighting - Assigning light source values
+    for(a=0; a<sizeX; a++){
+        for(b=0; b<sizeZ; b++){
+            covered = false;
+            for(c=sizeY-1; c>=0; c--){
+                currentBlock = map[a][b][c];
+
+                if(currentBlock >= 100){
+                    skyLight = -1;
+                    blockLight = -1;
+
+                    covered = true;
+                } else {
+                    blockLight = 0;
+
+                    if(covered == true){
+                        skyLight = 0;
+                    } else {
+                        skyLight = MAX_LIGHT;
+                    }
+
+                    //change this so it uses tags instead or something, instead of checking for different blocks
+
+                    if(currentBlock == TORCH){
+                        blockLight = TORCH_LIGHT;
+                    } else if(currentBlock == LAVA_FULL || currentBlock == LAVA_SURFACE){
+                        blockLight = LAVA_LIGHT;
+                    } else if(currentBlock == FIRE){
+                        blockLight = FIRE_LIGHT;
+                    }
+
+                }
+
+                skyLightMap[a][b][c] = skyLight;
+                blockLightMap[a][b][c] = blockLight;
+            }
+        }
+    }
+
+    //Step 2 and 3 of lighting, repeated - scan light map and assign node values based on what's next to them
+    //Repeating these steps makes sure light reaches to all areas, such as a winding tunnel
+    for(scanIter=0; scanIter<MAX_LIGHT/2; scanIter++){
+
+        //Step 2 - scan through map
+        for(a=0; a<sizeX; a++){
+            for(b=0; b<sizeZ; b++){
+                for(c=0; c<sizeY; c++){
+                    if(skyLightMap[a][b][c] == -1 || (skyLightMap[a][b][c] == MAX_LIGHT && blockLightMap[a][b][c] == MAX_LIGHT)) continue;
+
+                    sky1 = skyLightMap[a][b][c];
+                    sky2 = 0;
+                    sky3 = 0;
+                    sky4 = 0;
+
+                    block1 = blockLightMap[a][b][c];
+                    block2 = 0;
+                    block3 = 0;
+                    block4 = 0;
+
+                    if(a>0){
+                        sky2 = skyLightMap[a-1][b][c]-1;
+                        block2 = blockLightMap[a-1][b][c]-1;
+                    }
+                    if(b>0){
+                        sky3 = skyLightMap[a][b-1][c]-1;
+                        block3 = blockLightMap[a][b-1][c]-1;
+                    }
+                    if(c>0){
+                        sky4 = skyLightMap[a][b][c-1]-1;
+                        block4 = blockLightMap[a][b][c-1]-1;
+                    }
+
+                    skyLightMap[a][b][c] = max(max(sky1, sky2), max(sky3, sky4));
+                    blockLightMap[a][b][c] = max(max(block1, block2), max(block3, block4));
+                }
+            }
+        }
+
+        //Step 3 - scan in opposite direction
+        for(a=sizeX-1; a>=0; a--){
+            for(b=sizeZ-1; b>=0; b--){
+                for(c=sizeY-1; c>=0; c--){
+                    if(skyLightMap[a][b][c] == -1 || (skyLightMap[a][b][c] == MAX_LIGHT && blockLightMap[a][b][c] == MAX_LIGHT)) continue;
+
+                    sky1 = skyLightMap[a][b][c];
+                    sky2 = 0;
+                    sky3 = 0;
+                    sky4 = 0;
+
+                    block1 = blockLightMap[a][b][c];
+                    block2 = 0;
+                    block3 = 0;
+                    block4 = 0;
+
+                    if(a<sizeX-1){
+                        sky2 = skyLightMap[a+1][b][c]-1;
+                        block2 = blockLightMap[a+1][b][c]-1;
+                    }
+                    if(b<sizeZ-1){
+                        sky3 = skyLightMap[a][b+1][c]-1;
+                        block3 = blockLightMap[a][b+1][c]-1;
+                    }
+                    if(c<sizeY-1){
+                        sky4 = skyLightMap[a][b][c+1]-1;
+                        block4 = blockLightMap[a][b][c+1]-1;
+                    }
+
+                    skyLightMap[a][b][c] = max(max(sky1, sky2), max(sky3, sky4));
+                    blockLightMap[a][b][c] = max(max(block1, block2), max(block3, block4));
+                }
+            }
+        }
+
+    }
+
+
+}
+
+int max(int n1, int n2){
+    return n1 > n2 ? n1 : n2;
+}
+
+int min(int n1, int n2){
+    return n1 < n2 ? n1 : n2;
+}
+
+int calculateBlockLight(int blockX, int blockZ, int blockY){
+    return max(0, min(8, blockLightMap[blockX][blockZ][blockY] + skyLightMap[blockX][blockZ][blockY] - worldTime + brightness));
+}
 
 void drawMap(int startX, int startZ, int startY, int angle){
     int x1 = 0;
@@ -572,6 +1003,11 @@ void drawMap(int startX, int startZ, int startY, int angle){
     int z1 = 0;
     int z2 = 0;
     int zChange = 0;
+
+    int currentBlock = 0;
+    int lightLevel;
+    bool flag;
+    int edgeLight = max(0, min(8, MAX_LIGHT - worldTime + brightness));
 
     if(angle == 0){ //from +x, +z (southeast/front corner)
 
@@ -618,15 +1054,102 @@ void drawMap(int startX, int startZ, int startY, int angle){
     for(c=startY; c<sizeY; c++){
         for(a=x1; a!=x2+xChange; a+=xChange){
             for(b=z1; b!=z2+zChange; b+=zChange){
-                if(map[a][b][c] == NULL) continue;
+                currentBlock = map[a][b][c];
+
+                if(currentBlock == AIR) continue;
                 if(a!=x2 && b!=z2 && c<sizeY-1) if(map[a+xChange][b][c]>=100 && map[a][b+zChange][c]>=100 && map[a][b][c+1]>=100) continue;
 
                 x = gridToScreenX(a,b);
                 y = gridToScreenY(a,b,c);
-                gfx_TransparentSprite(blocks[map[a][b][c]], x, y);
 
-                if(shadows[shadowMap[a][b][c]] != NULL)
-                    gfx_TransparentSprite(shadows[shadowMap[a][b][c]], x, y);
+                if(currentBlock == FIRE){
+                    /*
+                    gfx_GetSprite(behind_fire_0, x, y);
+                    */
+                    fireInWorld = true;
+                    
+                    gfx_TransparentSprite(fires[fireNum], x, y);
+                } else if(currentBlock == CHEST){
+                    gfx_TransparentSprite(chests[chestOpening[a][b][c][1]], x, gridToScreenY(a,b,c+1));
+                } else if(currentBlock == STONE_25P){
+                    if(a+xChange<0 || a+xChange>sizeX-1){
+                        gfx_TransparentSprite(stone_25p_left, x, y);
+                    } else if(a+xChange>=0 && a+xChange<sizeX){
+                        if(map[a+xChange][b][c] < STONE_25P)
+                            gfx_TransparentSprite(stone_25p_left, x, y);
+                    }
+
+                    if(b+zChange<0 || b+zChange>sizeZ-1){
+                        gfx_TransparentSprite(stone_25p_right, x, y);
+                    } else if(b+zChange>=0 && b+zChange<sizeZ){
+                        if(map[a][b+zChange][c] < STONE_25P)
+                            gfx_TransparentSprite(stone_25p_right, x, y);
+                    }
+
+                    if(c+1>sizeY-1){
+                        gfx_TransparentSprite(stone_25p_top, x, y);
+                    } else if(map[a][b][c+1] < STONE_25P) {
+                        gfx_TransparentSprite(stone_25p_top, x, y);
+                    }
+
+                } else {
+                    gfx_TransparentSprite(blocks[currentBlock], x, y);
+                }
+
+                //Draw Shadows
+                if(map[a][b][c]>=100){
+
+                    flag = true;
+
+                    if(a+xChange>=0 && a+xChange<sizeX){ //next block is within world range
+                        lightLevel = calculateBlockLight(a+xChange, b, c);
+                        if(map[a+xChange][b][c]>=STONE_25P)
+                            flag = false;
+                    } else { //next block is outside world range
+                        lightLevel = edgeLight;
+                    }
+
+                    if(lightLevel<8 && flag==true){
+                        if(drawAngle == 1 || drawAngle == 3){
+                            gfx_TransparentSprite(shadowLeft[lightLevel], gridToScreenX(a+xChange, b), gridToScreenY(a+xChange, b, c));
+                        } else {
+                            gfx_TransparentSprite(shadowRight[lightLevel], gridToScreenX(a+xChange, b), gridToScreenY(a+xChange, b, c));
+                        }
+                    }
+
+                    flag = true;
+
+                    if(b+zChange>=0 && b+zChange<sizeZ){
+                        lightLevel = calculateBlockLight(a, b+zChange, c);
+                        if(map[a][b+zChange][c]>=STONE_25P)
+                            flag = false;
+                    } else {
+                        lightLevel = edgeLight;
+                    }
+
+                    if(lightLevel<8 && flag==true){
+                        if(drawAngle == 1 || drawAngle == 3){
+                            gfx_TransparentSprite(shadowRight[lightLevel], gridToScreenX(a, b+zChange), gridToScreenY(a, b+zChange, c));
+                        } else {
+                            gfx_TransparentSprite(shadowLeft[lightLevel], gridToScreenX(a, b+zChange), gridToScreenY(a, b+zChange, c));
+                        }
+                    }
+
+                    flag = true;
+
+                    if(c<sizeY-1){
+                        lightLevel = calculateBlockLight(a, b, c+1);
+                        if(map[a][b][c+1]>=STONE_25P)
+                            flag = false;
+                    } else {
+                        lightLevel = edgeLight;
+                    }
+
+                    if(lightLevel<8 && flag==true){
+                        gfx_TransparentSprite(shadowFloor[lightLevel], x, gridToScreenY(a, b, c+1));
+                    }
+
+                }
 
                 //gfx_BlitBuffer();
                 //delay(100);
@@ -634,6 +1157,10 @@ void drawMap(int startX, int startZ, int startY, int angle){
 
         }
     }
+
+    fireNum++;
+    if(fireNum > 15)
+        fireNum = 0;
 }
 
 void mapRotationChange(){
@@ -653,18 +1180,7 @@ void mapRotationChange(){
         }
     }
     if(flag == true){
-        gfx_FillScreen(skyColor);
-        drawMap(0,0,0,drawAngle);
-        drawBlockSelection();
-        
-        selectionX = gridToScreenX(selectionA, selectionB);
-        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
-
-        gfx_GetSprite(behind_selection, selectionX, selectionY);
-
-        gfx_TransparentSprite(selection_box, selectionX, selectionY);
-
-        gfx_BlitBuffer();
+        drawMapToScreen(0,0,0);
     }
 }
 
@@ -699,18 +1215,7 @@ void changeDrawPosition(){
     }
 
     if(flag == true){
-        gfx_FillScreen(skyColor);
-        drawMap(0,0,0,drawAngle);
-        drawBlockSelection();
-
-        selectionX = gridToScreenX(selectionA, selectionB);
-        selectionY = gridToScreenY(selectionA, selectionB, selectionC);
-
-        gfx_GetSprite(behind_selection, selectionX, selectionY);
-
-        gfx_TransparentSprite(selection_box, selectionX, selectionY);
-
-        gfx_BlitBuffer();
+        drawMapToScreen(0,0,0);
     }
 }
 
@@ -728,14 +1233,21 @@ void drawCoordinates(){
 
 void drawBlockSelection(){
     gfx_SetColor(0);
-    gfx_FillRectangle_NoClip(0,204,36,36);
-
+    gfx_FillRectangle_NoClip(0,193,36,51);
 
     gfx_SetColor(4);
-    gfx_Line(0,204,36,204);
-    gfx_Line(36,204,36,240);
+    gfx_Line(0,193,36,193);
+    gfx_Line(36,193,36,240);
 
-    gfx_TransparentSprite(blocks[blockSelection], 4, 208);
+    if(blockSelection == OAK_DOOR_SOUTH_BOTTOM || blockSelection == OAK_DOOR_SOUTH_TOP){
+        gfx_TransparentSprite(oak_door_south, 4, 193);
+    } else if(blockSelection == OAK_DOOR_EAST_2_BOTTOM || blockSelection == OAK_DOOR_EAST_2_TOP){
+        gfx_TransparentSprite(oak_door_east_2, 4, 193);
+    } else if(blockSelection == CHEST){
+        gfx_TransparentSprite(chest_1, 4, 193);
+    } else {
+        gfx_TransparentSprite(blocks[blockSelection], 4, 208);
+    }
 }
 
 void playerMovement(){
@@ -833,6 +1345,7 @@ void playerMovement(){
 }
 
 void selectionMovement(){
+    int iter = selectionC;
     i = 0;
     if(kb_Data[7] && frameCount2 == 0){
         key = kb_Data[7];
@@ -875,14 +1388,23 @@ void selectionMovement(){
 
         gfx_BlitScreen();
 
-        gfx_Sprite(behind_selection, selectionX, selectionY);
+        gfx_Sprite(behind_selection_box, selectionX, selectionY);
+        gfx_Sprite(behind_selection_tile, selectionX, selectionY_tile);
 
         selectionX = gridToScreenX(selectionA, selectionB);
         selectionY = gridToScreenY(selectionA, selectionB, selectionC);
 
-        gfx_GetSprite(behind_selection, selectionX, selectionY);
+        while(map[selectionA][selectionB][iter] != AIR && iter<sizeY-1){
+            iter++;
+        }
+
+        selectionY_tile = gridToScreenY(selectionA, selectionB, iter);
+
+        gfx_GetSprite(behind_selection_box, selectionX, selectionY);
+        gfx_GetSprite(behind_selection_tile, selectionX, selectionY_tile);
 
         gfx_TransparentSprite(selection_box, selectionX, selectionY);
+        gfx_TransparentSprite(selection_tile, selectionX, selectionY_tile);
 
         gfx_BlitBuffer();
     }
@@ -903,6 +1425,12 @@ void blockSelectionChange(){
                     blockSelection += i;
                     if(blockSelection > 111) blockSelection = 0;
                     if(blockSelection < 0) blockSelection = 111;
+
+                    if(blockSelection == OAK_DOOR_SOUTH_TOP)
+                        blockSelection += i;
+                    if(blockSelection == OAK_DOOR_EAST_2_TOP)
+                        blockSelection += i;
+
                 } while(blocks[blockSelection] == NULL);
                 drawBlockSelection();
                 gfx_BlitBuffer();
@@ -916,6 +1444,7 @@ void blockSelectionChange(){
 }
 
 void blockPlacement(){
+    int prevBlock;
 
     if(kb_Data[1]){
         key = kb_Data[1];
@@ -925,84 +1454,50 @@ void blockPlacement(){
             if(key == kb_Del) i = AIR;
 
             if(map[selectionA][selectionB][selectionC] != i){
+                prevBlock = map[selectionA][selectionB][selectionC];
+
                 map[selectionA][selectionB][selectionC] = i;
 
-                lightUpdates();
+                if(selectionC>0){
+                    if(map[selectionA][selectionB][selectionC-1] == OAK_DOOR_SOUTH_BOTTOM || map[selectionA][selectionB][selectionC-1] == OAK_DOOR_EAST_2_BOTTOM)
+                        map[selectionA][selectionB][selectionC-1] = AIR;
+                }
+                if(selectionC<sizeY-1){
+                    if(map[selectionA][selectionB][selectionC+1] == OAK_DOOR_SOUTH_TOP || map[selectionA][selectionB][selectionC+1] == OAK_DOOR_EAST_2_TOP)
+                        map[selectionA][selectionB][selectionC+1] = AIR;
+                }
 
-                gfx_FillScreen(skyColor);
-                drawMap(0,0,0,drawAngle);
-                drawBlockSelection();
-                
-                selectionX = gridToScreenX(selectionA, selectionB);
-                selectionY = gridToScreenY(selectionA, selectionB, selectionC);
+                if(selectionC<sizeY-2){
+                    if(i == OAK_DOOR_SOUTH_BOTTOM || i == OAK_DOOR_EAST_2_BOTTOM){
+                        if(map[selectionA][selectionB][selectionC+1] == OAK_DOOR_SOUTH_BOTTOM || map[selectionA][selectionB][selectionC+1] == OAK_DOOR_EAST_2_BOTTOM)
+                            map[selectionA][selectionB][selectionC+2] = AIR;
+                    }
+                }
 
-                gfx_GetSprite(behind_selection, selectionX, selectionY);
+                if(i == OAK_DOOR_SOUTH_BOTTOM){
+                    if(selectionC<sizeY-1)
+                        map[selectionA][selectionB][selectionC+1] = OAK_DOOR_SOUTH_TOP;
+                } else if(i == OAK_DOOR_EAST_2_BOTTOM){
+                    if(selectionC<sizeY-1)
+                        map[selectionA][selectionB][selectionC+1] = OAK_DOOR_EAST_2_TOP;
+                }
 
-                gfx_TransparentSprite(selection_box, selectionX, selectionY);
+                if(i == AIR){
+                    if(selectionC < sizeY-1){
+                        if(map[selectionA][selectionB][selectionC+1] == OAK_DOOR_SOUTH_TOP || map[selectionA][selectionB][selectionC+1] == OAK_DOOR_EAST_2_TOP)
+                            map[selectionA][selectionB][selectionC+1] = AIR;
+                    }
+                    if(selectionC > 0) {
+                        if(map[selectionA][selectionB][selectionC-1] == OAK_DOOR_SOUTH_BOTTOM || map[selectionA][selectionB][selectionC-1] == OAK_DOOR_EAST_2_BOTTOM)
+                            map[selectionA][selectionB][selectionC-1] = AIR;
+                    }
+                }
 
-                gfx_BlitBuffer();
+                generateLightMap();
+
+                drawMapToScreen(0,0,0);
 
                 updateSurroundingBlocks(selectionA, selectionB, selectionC);
-            }
-        }
-    }
-}
-
-void lightUpdates(){
-    int x1, x2, z1, z2, y1, y2;
-    int iter;
-    bool flag = true;
-
-    int lightLevel;
-
-    if(selectionC>0){
-        j=selectionC-1;
-        while(map[selectionA][selectionB][j] == AIR && j>0) j--;
-
-        if(i != AIR){
-            if(worldTime == 0)
-                shadowMap[selectionA][selectionB][j] = SHADOW_100;
-        } else {
-            iter = j;
-            while(iter<sizeY-1){
-                iter++;
-                if(map[selectionA][selectionB][iter] != AIR)
-                    flag = false;
-            }
-
-            if(flag==true && worldTime==0)
-                shadowMap[selectionA][selectionB][j] = MAX_LIGHT;
-        }
-        
-    }
-
-    if(i==TORCH){
-        x1 = selectionA - MAX_LIGHT;
-        if(x1<0) x1 = 0;
-        x2 = selectionA + MAX_LIGHT;
-        if(x2>sizeX-1) x2 = sizeX-1;
-
-        z1 = selectionB - MAX_LIGHT;
-        if(z1<0) z1 = 0;
-        z2 = selectionB + MAX_LIGHT;
-        if(z2>sizeZ-1) z2 = sizeZ-1;
-
-        y1 = selectionC - MAX_LIGHT;
-        if(y1<0) y1 = 0;
-        y2 = selectionC + MAX_LIGHT;
-        if(y2>sizeY-1) y2 = sizeY-1;
-
-
-        for(c=y1; c<=y2; c++){
-            for(a=x1; a<=x2; a++){
-                for(b=z1; b<=z2; b++){
-
-                    lightLevel = MAX_LIGHT - (abs(selectionA-a) + abs(selectionB-b) + abs(selectionC-c));
-                    if(lightLevel < 0) lightLevel = 0;
-
-                    if(shadowMap[a][b][c] < lightLevel)
-                        shadowMap[a][b][c] = lightLevel;
-                }
             }
         }
     }
@@ -1023,6 +1518,7 @@ int gridToScreenX(int gridX, int gridZ){
     }
 
     return midX-(gridX*12)+(gridZ*12);
+
 }
 
 int gridToScreenY(int gridX, int gridZ, int gridY){
@@ -1040,6 +1536,7 @@ int gridToScreenY(int gridX, int gridZ, int gridY){
     }
 
     return midY+(gridZ*6)+(gridX*6)-(gridY*15)+gridY;
+
 }
 
 void blockPhysics(){
@@ -1077,16 +1574,8 @@ void blockPhysics(){
                 updateSurroundingBlocks(blockX, blockZ, blockY);
             }
 
-            gfx_FillScreen(skyColor);
-            drawMap(0,0,0,drawAngle);
-            drawBlockSelection();
+           drawMapToScreen(0,0,0);
 
-            selectionX = gridToScreenX(selectionA, selectionB);
-            selectionY = gridToScreenY(selectionA, selectionB, selectionC);
-            gfx_GetSprite(behind_selection, selectionX, selectionY);
-
-            gfx_TransparentSprite(selection_box, selectionX, selectionY);
-            gfx_BlitBuffer();
         }
     }
 }

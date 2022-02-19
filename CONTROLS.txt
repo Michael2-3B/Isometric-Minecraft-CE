@@ -1,9 +1,11 @@
 CONTROLS
 --------
-there's a lot, and they're fairly confusing right now, so bear with me
+there's a lot, and they're fairly confusing right now, so bear with me.
+I'll eventually change them to be more user friendly.
 
-selection / block placement
----------------------------
+
+selection / block placement / block interaction
+-----------------------------------------------
 
 y=          = cycle block selection left
 window      = cycle block selection right
@@ -17,6 +19,7 @@ graph       = move selection box up
 
 2nd         = place block
 del         = remove block
+zoom        = right click block (only used for chests right now)
 
 
 character movement (currently disabled)
@@ -32,8 +35,8 @@ character movement (currently disabled)
 
 map rotation
 ------------
-- (minus)  = rotate map clockwise
-+ (plus)   = rotate map counter-clockwise
+- (minus)  = rotate map clockwise 90 degrees
++ (plus)   = rotate map counter-clockwise 90 degrees
 
 
 map positioning
@@ -42,6 +45,14 @@ alpha        = move map left
 stat         = move map right
 mode         = move map up
 X,T,theta,n  = move map down
+
+
+world time / map brightness
+---------------------------
+ln           = fade to day
+sto->        = fade to night
+/ (divide)   = decrease world brightness
+* (multiply) = increase world brightness
 
 
 other
