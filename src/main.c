@@ -489,11 +489,7 @@ void main(void) {
     srand(rtc_Time(NULL));
 
     worldTime = 0; //0 is day, 8 is night
-    if(worldTime == 0){
-        skyColor = 5;
-    } else {
-        skyColor = 13;
-    }
+    skyColor = worldTime+5;
 
     dbg_sprintf(dbgout, "Beginning...\n");
 
@@ -810,6 +806,8 @@ void generateMap(int mapNum){
                         map[a][b][c] = DIRT;
                     } else if(c==3){
                         map[a][b][c] = GRASS_BLOCK;
+                    } else if(c==sizeY-1 && a>0 && a<sizeX-1 && b>0 && b<sizeZ-1){
+                        map[a][b][c] = BRICK;
                     } else {
                         map[a][b][c] = AIR;
                     }
@@ -992,7 +990,7 @@ int min(int n1, int n2){
 }
 
 int calculateBlockLight(int blockX, int blockZ, int blockY){
-    return max(0, min(8, blockLightMap[blockX][blockZ][blockY] + skyLightMap[blockX][blockZ][blockY] - worldTime + brightness));
+    return max(0, min(8, max(blockLightMap[blockX][blockZ][blockY], skyLightMap[blockX][blockZ][blockY]-worldTime) + brightness));
 }
 
 void drawMap(int startX, int startZ, int startY, int angle){
